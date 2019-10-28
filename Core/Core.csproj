@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="MessageHandlers\Interfaces\" />
+    <Folder Include="Pipeline\Interfaces\" />
+    <Folder Include="Models\Exceptions\" />
+    <Folder Include="Models\Entities\" />
+    <Folder Include="Security\" />
+  </ItemGroup>
+
+</Project>
