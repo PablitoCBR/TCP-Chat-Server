@@ -1,10 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using Host.Builder.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
+using System;
 
 namespace Server
 {
-    class Server
+    public static class Server
     {
+        public static IHostBuilder CreateDeafaultBuilder<TStartup>(string[] args) where TStartup : AbstractStartup
+        {
+            TStartup startup = Activator.CreateInstance<TStartup>();
+            IServiceProvider serviceProvider = startup.ConfigureServices(new ServiceCollection());
+
+            IHostBuilder hostBuilder = serviceProvider.GetService<IHostBuilder>();
+            return hostBuilder;
+        }
     }
 }

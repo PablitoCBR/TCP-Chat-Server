@@ -1,12 +1,13 @@
-﻿using System;
+﻿using Host.Builder.Interfaces;
 
 namespace Server
 {
     class Program
     {
         static void Main(string[] args)
-        {
-            Console.WriteLine("Hello World!");
-        }
+            => CreateServerHostBuilder(args).Build().Run();
+
+        static IHostBuilder CreateServerHostBuilder(string[] args)
+            => Server.CreateDeafaultBuilder<Startup>(args);
     }
 }
