@@ -1,7 +1,8 @@
-﻿using System.Net.Sockets;
-using Host.Models.Interfaces;
+﻿using System.Net;
+using System.Net.Sockets;
+using Core.Models.Interfaces;
 
-namespace Host.Models
+namespace Core.Models
 {
     public class ClientMetaData : IClientInfo
     {
@@ -11,11 +12,14 @@ namespace Host.Models
 
         public Socket Socket { get; }
 
+        public IPEndPoint RemoteEndPoint { get; }
+
         private ClientMetaData(int id, string name, Socket socket)
         {
             Id = id;
             Name = name;
             Socket = socket;
+            RemoteEndPoint = socket.RemoteEndPoint as IPEndPoint;
         }
 
         public static IClientInfo Create(int id, string name, Socket socket)

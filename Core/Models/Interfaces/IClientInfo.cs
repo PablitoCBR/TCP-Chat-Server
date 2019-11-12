@@ -1,6 +1,7 @@
-﻿using System.Net.Sockets;
+﻿using System.Net;
+using System.Net.Sockets;
 
-namespace Host.Models.Interfaces
+namespace Core.Models.Interfaces
 {
     public interface IClientInfo
     {
@@ -9,5 +10,7 @@ namespace Host.Models.Interfaces
         string Name { get; }
 
         Socket Socket { get; }
+
+        IPEndPoint RemoteEndPoint { get; }
     }
 }
