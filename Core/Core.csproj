@@ -6,9 +6,8 @@
 
   <ItemGroup>
     <Folder Include="MessageHandlers\Interfaces\" />
+    <Folder Include="Dispatcher\" />
     <Folder Include="Pipeline\Interfaces\" />
-    <Folder Include="Models\Exceptions\" />
-    <Folder Include="Models\Entities\" />
     <Folder Include="Security\" />
   </ItemGroup>
 

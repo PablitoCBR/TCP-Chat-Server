@@ -4,7 +4,7 @@ using System.Threading;
 
 namespace Host.Listeners.Interfaces
 {
-    public interface IListener : IDisposable
+    public interface IListener 
     {
         ProtocolType ProtocolType { get; }
 

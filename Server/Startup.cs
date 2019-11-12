@@ -4,12 +4,12 @@ using Microsoft.Extensions.DependencyInjection;
 
 using Serilog;
 
-using Host.Abstractions;
 using Host.Builder;
 using Host.Builder.Interfaces;
 using Host.Builder.Models;
 using Host.Listeners;
 using Host.Listeners.Interfaces;
+using AutoMapper;
 
 namespace Server
 {
@@ -19,6 +19,7 @@ namespace Server
         {
             Log.Logger = new LoggerConfiguration().ReadFrom.Configuration(Configuration).CreateLogger();
             services.AddLogging(cfg => cfg.AddSerilog());
+            services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
             ConfigureOptions(services);
 

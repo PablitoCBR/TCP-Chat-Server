@@ -15,11 +15,11 @@ namespace Host.Listeners
             ServiceProvider = serviceProvider;
         }
 
-        public IListener CreateTcpListener(int port, int pendingConnectionsLimit)
+        public IListener CreateTcpListener(int port, ListennerSettings settings)
         {
             IPAddress ipAddress = Dns.GetHostAddresses(Dns.GetHostName())[0];
             IPEndPoint ipEndPoint = new IPEndPoint(ipAddress, port);
-            return new TcpListener(pendingConnectionsLimit, ipEndPoint, ServiceProvider.GetService<ILogger<IListener>>());
+            return new TcpListener(settings, ipEndPoint, ServiceProvider.GetService<ILogger<IListener>>());
         }
     }
 }
