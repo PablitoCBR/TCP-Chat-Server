@@ -5,10 +5,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="MessageHandlers\Interfaces\" />
-    <Folder Include="Dispatcher\" />
-    <Folder Include="Pipeline\Interfaces\" />
-    <Folder Include="Security\" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="2.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DAL\DAL.csproj" />
   </ItemGroup>
 
 </Project>

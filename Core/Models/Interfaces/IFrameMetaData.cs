@@ -6,10 +6,10 @@
     {
         MessageType Type { get; }
 
-        uint SenderID { get; }
+        int SenderID { get; }
 
-        uint HeadersDataLength { get; }
+        int HeadersDataLength { get; }
 
-        uint MessageDataLength { get; }
+        int MessageDataLength { get; }
     }
 }

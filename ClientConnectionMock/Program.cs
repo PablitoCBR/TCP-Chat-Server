@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -43,9 +44,19 @@ namespace Client
 
                     // Creation of messagge that 
                     // we will send to Server 
-                    byte[] messageSent = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 };
+                    byte[] type = new byte[] { 0x01 };
+                    byte[] headers = Encoding.ASCII.GetBytes("Authentication:" + Convert.ToBase64String(Encoding.ASCII.GetBytes("pablito:password")));
+                    byte[] id = BitConverter.GetBytes(0);
+                    byte[] messageLength = BitConverter.GetBytes(0);
+                    byte[] headersLEngth = BitConverter.GetBytes(headers.Length);
+                    List<byte> message = new List<byte>();
+                    message.AddRange(type);
+                    message.AddRange(id);
+                    message.AddRange(headersLEngth);
+                    message.AddRange(messageLength);
+                    message.AddRange(headers);
 
-                    int byteSent = sender.Send(messageSent);
+                    int byteSent = sender.Send(message.ToArray());
 
                     // Data buffer 
                     byte[] messageReceived = new byte[1024];

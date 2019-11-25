@@ -4,7 +4,7 @@ using Core.Models.Interfaces;
 
 namespace Core.Models
 {
-    public class ClientMetaData : IClientInfo
+    public class ClientInfo : IClientInfo
     {
         public int Id { get; }
 
@@ -14,7 +14,7 @@ namespace Core.Models
 
         public IPEndPoint RemoteEndPoint { get; }
 
-        private ClientMetaData(int id, string name, Socket socket)
+        private ClientInfo(int id, string name, Socket socket)
         {
             Id = id;
             Name = name;
@@ -23,6 +23,6 @@ namespace Core.Models
         }
 
         public static IClientInfo Create(int id, string name, Socket socket)
-            => new ClientMetaData(id, name, socket);
+            => new ClientInfo(id, name, socket);
     }
 }

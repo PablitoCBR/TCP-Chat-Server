@@ -3,6 +3,12 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Net;
+using Microsoft.Extensions.Options;
+using Core.Models;
+using Core.Services.Interfaces;
+using Core.Pipeline.Interfaces;
+using Core.MessageHandlers.Interfaces;
+using Core.MessageHandlers;
 
 namespace Host.Listeners
 {
@@ -19,7 +25,14 @@ namespace Host.Listeners
         {
             IPAddress ipAddress = Dns.GetHostAddresses(Dns.GetHostName())[0];
             IPEndPoint ipEndPoint = new IPEndPoint(ipAddress, port);
-            return new TcpListener(settings, ipEndPoint, ServiceProvider.GetService<ILogger<IListener>>());
+            return new TcpListener(
+                settings, 
+                ipEndPoint,
+                this.ServiceProvider.GetService<ILogger<IListener>>(), 
+                this.ServiceProvider.GetService<IFrameMetaEncoder>(),
+                this.ServiceProvider.GetService<IOptions<FrameMetaDataConfiguration>>(),
+                this.ServiceProvider.GetService<IMessageEncoder>(),
+                this.ServiceProvider.GetService<IAuthenticationHandler>());
         }
     }
 }

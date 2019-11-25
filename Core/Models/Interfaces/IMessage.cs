@@ -1,5 +1,4 @@
-﻿using Core.Models.Enums;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Core.Models.Interfaces
 {
@@ -10,8 +9,6 @@ namespace Core.Models.Interfaces
         IFrameMetaData FrameMetaData { get; }
 
         IDictionary<string, string> Headers { get; }
-
-        byte[] HeadersData { get; }
 
         byte[] MessageData { get; }
     }
