@@ -22,6 +22,8 @@ using Core.Security.Interfaces;
 using DAL.Repositories.Interfaces;
 using DAL.Repositories;
 using DAL;
+using Core.Pipeline.Interfaces;
+using Core.Pipeline;
 
 namespace Server
 {
@@ -61,6 +63,7 @@ namespace Server
 
         private void ConfigureMessageHandlers(IServiceCollection services)
         {
+            services.AddTransient<IMessageDispatcher, MessageDispatcher>();
             services.AddTransient<IAuthenticationHandler, AuthenticationHandler>();
         }
     }

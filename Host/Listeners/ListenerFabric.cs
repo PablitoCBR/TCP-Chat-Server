@@ -32,7 +32,8 @@ namespace Host.Listeners
                 this.ServiceProvider.GetService<IFrameMetaEncoder>(),
                 this.ServiceProvider.GetService<IOptions<FrameMetaDataConfiguration>>(),
                 this.ServiceProvider.GetService<IMessageEncoder>(),
-                this.ServiceProvider.GetService<IAuthenticationHandler>());
+                this.ServiceProvider.GetService<IAuthenticationHandler>(),
+                this.ServiceProvider.GetService<IMessageDispatcher>());
         }
     }
 }

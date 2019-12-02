@@ -15,6 +15,8 @@ using Core.Models;
 using Core.Models.Enums;
 using Microsoft.Extensions.Options;
 using Core.MessageHandlers.Interfaces;
+using Core.Models.Exceptions.UserFaultExceptions;
+using Core.Pipeline.Interfaces;
 
 namespace Host.Listeners
 {
@@ -44,8 +46,10 @@ namespace Host.Listeners
 
         private IAuthenticationHandler AuthenticationHandler { get; }
 
-        public TcpListener(ListennerSettings settings, IPEndPoint ipEndPoint, ILogger<IListener> logger, IFrameMetaEncoder frameMetaEncoder, 
-            IOptions<FrameMetaDataConfiguration> frameMetaDataConfiguration, IMessageEncoder messageEncoder, IAuthenticationHandler authenticationHandler)
+        private IMessageDispatcher MessageDispatcher { get; }
+
+        public TcpListener(ListennerSettings settings, IPEndPoint ipEndPoint, ILogger<IListener> logger, IFrameMetaEncoder frameMetaEncoder,
+            IOptions<FrameMetaDataConfiguration> frameMetaDataConfiguration, IMessageEncoder messageEncoder, IAuthenticationHandler authenticationHandler, IMessageDispatcher messageDispatcher)
         {
             Logger = logger;
             ProtocolType = ProtocolType.Tcp;
@@ -58,6 +62,7 @@ namespace Host.Listeners
             FrameMetaDataConfiguration = frameMetaDataConfiguration.Value;
             MessageEncoder = messageEncoder;
             AuthenticationHandler = authenticationHandler;
+            MessageDispatcher = messageDispatcher;
 
             Logger.LogInformation("TCP Listener created and assigned to port: {0}", IPEndPoint.Port);
         }
@@ -116,15 +121,21 @@ namespace Host.Listeners
                 }
                 else
                 {
-                    byte[] data = await this.ReceiveDataAsync(connectedClientSocket, metaData.HeadersDataLength + metaData.MessageDataLength);
+                    byte[] data = await this.ReceiveDataAsync(connectedClientSocket, metaData.HeadersDataLength + metaData.MessageDataLength).ConfigureAwait(false);
                     IMessage message = this.MessageEncoder.Decode(data, metaData, ClientInfo.Create(0, string.Empty, connectedClientSocket));
 
                     if (metaData.Type == MessageType.Registration)
+                    {
                         await this.AuthenticationHandler.RegisterAsync(message);
+                        connectedClientSocket.Send(Encoding.ASCII.GetBytes("User registered!"));
+                        connectedClientSocket.Close();
+                        // signal sucess of registration
+                    }
                     else
                     {
-                        IClientInfo client = await this.AuthenticationHandler.Authenticate(message);
+                        IClientInfo client = await this.AuthenticationHandler.Authenticate(message).ConfigureAwait(false);
                         this.RegisterConnectedUser(client);
+                        connectedClientSocket.Send(Encoding.ASCII.GetBytes("User authenticated and server is listening!"));
                         this.ListenForMessagesAsync(client);
                     }
                 }
@@ -134,6 +145,10 @@ namespace Host.Listeners
             {
                 if (CancellationToken.IsCancellationRequested)
                     Logger.LogWarning("Listening caceled while receiving frame from: {0}", ((IPEndPoint)connectedClientSocket?.RemoteEndPoint)?.Address.ToString());
+                else if (ex is AbstractUserFaultException)
+                {
+                    // hadnel user fault
+                }
                 else
                 {
                     Logger.LogError(ex, "Exception occured while receiving and creating frame metadata from: {0}. Check Logs for more info!",
@@ -143,8 +158,6 @@ namespace Host.Listeners
                 connectedClientSocket.Close();
                 return;
             }
-
-            connectedClientSocket.Send(Encoding.ASCII.GetBytes("Message received! Its just test signal response!"));
         }
 
         private void RegisterConnectedUser(IClientInfo clientInfo)
@@ -162,16 +175,24 @@ namespace Host.Listeners
             {
                 try
                 {
-                    byte[] frameMetaData = await this.ReceiveDataAsync(clientInfo.Socket, this.FrameMetaDataConfiguration.MetaDataLength);
+                    byte[] frameMetaData = await this.ReceiveDataAsync(clientInfo.Socket, this.FrameMetaDataConfiguration.MetaDataLength).ConfigureAwait(false);
                     IFrameMetaData frameMeta = this.FrameMetaEncoder.Decode(frameMetaData);
-                    byte[] data = await this.ReceiveDataAsync(clientInfo.Socket, frameMeta.HeadersDataLength + frameMeta.MessageDataLength);
+
+                    if (frameMeta.Type == MessageType.None)
+                        break;
+
+                    byte[] data = await this.ReceiveDataAsync(clientInfo.Socket, frameMeta.HeadersDataLength + frameMeta.MessageDataLength).ConfigureAwait(false);
                     IMessage message = this.MessageEncoder.Decode(data, frameMeta, clientInfo);
-                    //await this.Dispatcher.DispatcheAsync(message, this.ConnectedClients);
+                    await this.MessageDispatcher.DispatchAsync(message, this.ConnectedClients).ConfigureAwait(false);
                 }
                 catch (AggregateException ex)
                 {
                     if (ex.InnerException is SocketException)
                         this.Logger.LogInformation("Connection with: {0} was closed by user.", clientInfo.Name);
+                    else if (ex.InnerException is AbstractUserFaultException)
+                    {
+                        // handle user fault ex
+                    }
                     else
                     {
                         this.Logger.LogError(ex, "Exception occured while listening for messages from {0} ({1}).",

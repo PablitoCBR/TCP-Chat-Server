@@ -6,5 +6,7 @@ namespace DAL.Repositories.Interfaces
     public interface IUserRepository : IRepository<User>
     {
         Task<User> GetByNameAsync(string name);
+
+        Task<bool> AnyWithNameAsync(string name);
     }
 }

@@ -2,11 +2,16 @@
 {
     public enum MessageType : byte
     {
-        Message = 0x00,
+        None = 0x00,
+        Message = 0xAA,
 
         Registration = 0x01,
         Authentication = 0x02,
 
-        Error = 0xFF
+        Unauthenticated = 0x03,
+        InvalidAuthentication = 0x04,
+        UsernameAlreadyTaken = 0x05,
+
+        InternalServerError = 0xFF
     }
 }

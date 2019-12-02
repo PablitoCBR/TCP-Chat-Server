@@ -21,12 +21,16 @@ namespace DAL.Repositories
             await this._context.SaveChangesAsync();
         }
 
-        public async Task<User> GetAsync(int id) 
+        public async Task<bool> AnyWithNameAsync(string name)
+            => await this._context.Users.AnyAsync(x => String.Equals(x.Username, name));
+
+
+        public async Task<User> GetAsync(int id)
             => await this._context.Users.SingleOrDefaultAsync(x => x.Id == id);
 
         public async Task<User> GetByNameAsync(string name)
             => await this._context.Users.SingleOrDefaultAsync(x => String.Equals(x.Username, name));
-        
+
 
         public async Task UpdateAsync(User data)
         {

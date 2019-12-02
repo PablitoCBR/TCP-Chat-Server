@@ -74,7 +74,46 @@ namespace Client
                           Encoding.ASCII.GetString(messageReceived,
                                                      0, byteRecv));
 
-                    sender.Shutdown(SocketShutdown.Both);
+                    Console.WriteLine("Press any key to log in");
+                    Console.ReadKey();
+
+                    sender.Close();
+                    sender  = new Socket(ipAddr.AddressFamily,
+                           SocketType.Stream, ProtocolType.Tcp);
+                    sender.Connect(localEndPoint);
+
+                    type = new byte[] { 0x02 };
+                    headers = Encoding.ASCII.GetBytes("Authentication:" + Convert.ToBase64String(Encoding.ASCII.GetBytes("pablito:password")));
+                    id = BitConverter.GetBytes(0);
+                    messageLength = BitConverter.GetBytes(0);
+                    headersLEngth = BitConverter.GetBytes(headers.Length);
+                    message = new List<byte>();
+                    message.AddRange(type);
+                    message.AddRange(id);
+                    message.AddRange(headersLEngth);
+                    message.AddRange(messageLength);
+                    message.AddRange(headers);
+
+                    byteSent = sender.Send(message.ToArray());
+
+                    // Data buffer 
+                    messageReceived = new byte[1024];
+
+                    // We receive the messagge using  
+                    // the method Receive(). This  
+                    // method returns number of bytes 
+                    // received, that we'll use to  
+                    // convert them to string 
+
+
+
+                    byteRecv = sender.Receive(messageReceived);
+                    Console.WriteLine("Message from Server -> {0}",
+                          Encoding.ASCII.GetString(messageReceived,
+                                                     0, byteRecv));
+
+                    Console.WriteLine("Press any key to close");
+                    Console.ReadKey();
                     sender.Close();
                 }
 

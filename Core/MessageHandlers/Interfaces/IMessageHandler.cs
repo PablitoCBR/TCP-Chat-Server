@@ -9,6 +9,6 @@ namespace Core.MessageHandlers.Interfaces
     {
         MessageType MessageType { get; }
 
-        Task HandleAsync(IMessage message, ConcurrentDictionary<int, IClientInfo> activeClients);
+        Task HandleAsync(IMessage message, ConcurrentDictionary<string, IClientInfo> activeClients);
     }
 }
