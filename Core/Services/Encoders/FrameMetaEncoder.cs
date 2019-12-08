@@ -2,14 +2,14 @@
 using Core.Models.Enums;
 using Core.Models.Exceptions;
 using Core.Models.Interfaces;
-using Core.Services.Interfaces;
+using Core.Services.Encoders.Interfaces;
 
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Core.Services
+namespace Core.Services.Encoders
 {
     public class FrameMetaEncoder : IFrameMetaEncoder
     {
@@ -53,8 +53,8 @@ namespace Core.Services
 
         public MessageType GetMessageType(byte[] frameMetaData)
         {
-            if (!Enum.IsDefined(typeof(MessageType), frameMetaData[0]))
-                throw new UnsupportedMessageType(frameMetaData[0], "Message frame mata data was containing unrecognized message type code.");
+            if (!Enum.IsDefined(typeof(MessageType), frameMetaData[0]) || (MessageType)frameMetaData[0] == MessageType.None)
+                throw new UnsupportedMessageTypeException(frameMetaData[0], "Message frame mata data was containing unrecognized message type code.");
             return (MessageType)frameMetaData[0];
         }
 

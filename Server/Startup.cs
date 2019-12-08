@@ -13,17 +13,19 @@ using Host.Listeners.Interfaces;
 using AutoMapper;
 
 using Core.Models;
-using Core.Services.Interfaces;
-using Core.Services;
-using Core.Security;
+using Core.Services.Encoders.Interfaces;
+using Core.Services.Encoders;
+using Core.Services.Security;
 using Core.MessageHandlers.Interfaces;
 using Core.MessageHandlers;
-using Core.Security.Interfaces;
+using Core.Services.Security.Interfaces;
 using DAL.Repositories.Interfaces;
 using DAL.Repositories;
 using DAL;
 using Core.Pipeline.Interfaces;
 using Core.Pipeline;
+using Core.Services.Factories.Interfaces;
+using Core.Services.Factories;
 
 namespace Server
 {
@@ -40,10 +42,14 @@ namespace Server
             services.AddSingleton<IHostBuilder, HostBuilder>();
 
             services.AddTransient<IListenerFabric, ListenerFabric>();
+
             services.AddTransient<IFrameMetaEncoder, FrameMetaEncoder>();
             services.AddTransient<IHeadersEncoder, HeadersEncoder>();
             services.AddTransient<IMessageEncoder, MessageEncoder>();
+
             services.AddTransient<ISecurityService, SecurityService>();
+            services.AddTransient<IMessageFactory, MessageFactory>();
+
             services.AddTransient<IUserRepository, UserRepository>();
 
             services.AddDbContext<ChattyDbContext>();

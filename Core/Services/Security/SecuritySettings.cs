@@ -1,5 +1,5 @@
 ﻿
-namespace Core.Security
+namespace Core.Services.Security
 {
     public class SecuritySettings
     {

@@ -44,7 +44,7 @@ namespace Client
 
                     // Creation of messagge that 
                     // we will send to Server 
-                    byte[] type = new byte[] { 0x01 };
+                    byte[] type = new byte[] { 0x35 };
                     byte[] headers = Encoding.ASCII.GetBytes("Authentication:" + Convert.ToBase64String(Encoding.ASCII.GetBytes("pablito:password")));
                     byte[] id = BitConverter.GetBytes(0);
                     byte[] messageLength = BitConverter.GetBytes(0);
@@ -82,7 +82,7 @@ namespace Client
                            SocketType.Stream, ProtocolType.Tcp);
                     sender.Connect(localEndPoint);
 
-                    type = new byte[] { 0x02 };
+                    type = new byte[] { 0x36 };
                     headers = Encoding.ASCII.GetBytes("Authentication:" + Convert.ToBase64String(Encoding.ASCII.GetBytes("pablito:password")));
                     id = BitConverter.GetBytes(0);
                     messageLength = BitConverter.GetBytes(0);

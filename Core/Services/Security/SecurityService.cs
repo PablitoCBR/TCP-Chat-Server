@@ -1,8 +1,8 @@
-﻿using Core.Security.Interfaces;
+﻿using Core.Services.Security.Interfaces;
 using Microsoft.Extensions.Options;
 using System.Security.Cryptography;
 
-namespace Core.Security
+namespace Core.Services.Security
 {
     public class SecurityService : ISecurityService
     {

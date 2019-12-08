@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Core.Services.Interfaces
+namespace Core.Services.Encoders.Interfaces
 {
     public interface IHeadersEncoder
     {

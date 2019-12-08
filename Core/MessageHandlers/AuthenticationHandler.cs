@@ -7,64 +7,70 @@ using Core.Models;
 using Core.Models.Exceptions.UserFaultExceptions;
 using Core.Models.Enums;
 using Core.Models.Interfaces;
-using Core.Security.Interfaces;
+using Core.Services.Security.Interfaces;
 using DAL.Models;
 using DAL.Repositories.Interfaces;
 using Microsoft.Extensions.Logging;
+using Core.Services.Factories.Interfaces;
 
 namespace Core.MessageHandlers
 {
     public class AuthenticationHandler : IAuthenticationHandler
     {
-        private ISecurityService SecurityService { get; }
+        private readonly ISecurityService _securityService;
 
-        private IUserRepository UserRepository { get; }
+        private readonly IUserRepository _userRepository;
 
-        private ILogger<IAuthenticationHandler> Logger { get; }
+        private readonly ILogger<IAuthenticationHandler> _logger;
 
-        public AuthenticationHandler(ISecurityService securityService, IUserRepository userRepository, ILogger<IAuthenticationHandler> logger)
+        private readonly IMessageFactory _messageFactory;
+
+        public AuthenticationHandler(ISecurityService securityService, IUserRepository userRepository, ILogger<IAuthenticationHandler> logger, IMessageFactory messageFactory)
         {
-            this.SecurityService = securityService;
-            this.UserRepository = userRepository;
-            this.Logger = logger;
+            _securityService = securityService;
+            _userRepository = userRepository;
+            _logger = logger;
+            _messageFactory = messageFactory;
         }
 
-        public async Task<IClientInfo> Authenticate(IMessage message)
+        public async Task<IClientInfo> Authenticate(IMessage message) 
         {
             var (username, password) = this.GetCredentials(message.Headers);
-            User user = await this.UserRepository.GetByNameAsync(username);
+            User user = await _userRepository.GetByNameAsync(username);
 
             if (user == null)
                 throw new AuthenticationException(MessageType.Unauthenticated, "Invalid username or password.");
 
-            if (!this.SecurityService.VerifyPassword(password, user.PasswordHash, user.PasswordSalt))
+            if (!_securityService.VerifyPassword(password, user.PasswordHash, user.PasswordSalt))
             {
-                this.Logger.LogWarning("Failed authentication attempt for user: {0}, from IP: {1}", username, message.ClientInfo.RemoteEndPoint);
+                _logger.LogWarning("Failed authentication attempt for user: {0}, from IP: {1}", username, message.ClientInfo.RemoteEndPoint);
                 throw new AuthenticationException(MessageType.Unauthenticated, "Invalid username or password.");
             }
-                
 
-            this.Logger.LogInformation("User {0} was authenticated successfully.", username);
+            _logger.LogInformation("User {0} was authenticated successfully.", username);
+            message.ClientInfo.Socket.Send(_messageFactory.CreateBytes(message.ClientInfo, MessageType.Authenticated, new Dictionary<string, string>())); // specify headers
+
             return ClientInfo.Create(user.Id, user.Username, message.ClientInfo.Socket);
         }
 
-        public async Task RegisterAsync(IMessage message)
+        public async Task RegisterAsync(IMessage message) // send info about success ( maybe with small delay?)
         {
             var (username, password) = this.GetCredentials(message.Headers);
 
-            if (await this.UserRepository.AnyWithNameAsync(username))
-                throw new AuthenticationException(MessageType.UsernameAlreadyTaken, "Username is already taken.");
+            if (await _userRepository.AnyWithNameAsync(username))
+                throw new AuthenticationException(MessageType.RegistrationFailed, "Username is already taken.");
 
-            var (passwordHash, salt) = this.SecurityService.GenerateHash(password);
+            var (passwordHash, salt) = _securityService.GenerateHash(password);
 
-            await this.UserRepository.AddAsync(new User(username, passwordHash, salt, DateTime.Now, message.ClientInfo.RemoteEndPoint.ToString()));
-            this.Logger.LogInformation("Registered new user. Username: {0}, Connected from IP: {1}.", username, message.ClientInfo.RemoteEndPoint);
+            await _userRepository.AddAsync(new User(username, passwordHash, salt, DateTime.Now, message.ClientInfo.RemoteEndPoint.ToString()));
+            _logger.LogInformation("Registered new user. Username: {0}, Connected from IP: {1}.", username, message.ClientInfo.RemoteEndPoint);
+            message.ClientInfo.Socket.Send(_messageFactory.CreateBytes(message.ClientInfo, MessageType.Registered, new Dictionary<string, string>())); // specify headers
         }
 
         private (string username, string password) GetCredentials(IDictionary<string, string> headers)
         {
             if (!headers.ContainsKey("Authentication"))
-                throw new AuthenticationException(MessageType.InvalidAuthentication, "Authentication header was not found.");
+                throw new AuthenticationException(MessageType.Unauthenticated, "Authentication header was not found.");
 
             string credentialsBase64 = headers["Authentication"];
             string credentailsString = Encoding.ASCII.GetString(Convert.FromBase64String(credentialsBase64));

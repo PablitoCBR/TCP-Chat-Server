@@ -1,4 +1,4 @@
-﻿namespace Core.Security.Interfaces
+﻿namespace Core.Services.Security.Interfaces
 {
     public interface ISecurityService
     {

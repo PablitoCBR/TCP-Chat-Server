@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Core.Services.Interfaces;
+using Core.Services.Encoders.Interfaces;
 
-namespace Core.Services
+namespace Core.Services.Encoders
 {
     public class HeadersEncoder : IHeadersEncoder
     {
@@ -27,6 +27,9 @@ namespace Core.Services
 
         public byte[] Encode(IDictionary<string, string> headers)
         {
+            if (headers.Count == 0)
+                return new byte[0];
+
             StringBuilder stringBuilder = new StringBuilder();
             foreach (KeyValuePair<string, string> header in headers)
                 stringBuilder.AppendFormat("\"{2}\":\"{1}\"\n", header.Key, header.Value);

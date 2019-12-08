@@ -5,10 +5,6 @@ using System;
 using System.Net;
 using Microsoft.Extensions.Options;
 using Core.Models;
-using Core.Services.Interfaces;
-using Core.Pipeline.Interfaces;
-using Core.MessageHandlers.Interfaces;
-using Core.MessageHandlers;
 
 namespace Host.Listeners
 {
@@ -29,11 +25,8 @@ namespace Host.Listeners
                 settings, 
                 ipEndPoint,
                 this.ServiceProvider.GetService<ILogger<IListener>>(), 
-                this.ServiceProvider.GetService<IFrameMetaEncoder>(),
                 this.ServiceProvider.GetService<IOptions<FrameMetaDataConfiguration>>(),
-                this.ServiceProvider.GetService<IMessageEncoder>(),
-                this.ServiceProvider.GetService<IAuthenticationHandler>(),
-                this.ServiceProvider.GetService<IMessageDispatcher>());
+                this.ServiceProvider);
         }
     }
 }

@@ -1,7 +1,8 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-
+using System.Net.Sockets;
 using System.Threading.Tasks;
 
 using Core.MessageHandlers.Interfaces;
@@ -23,6 +24,16 @@ namespace Core.Pipeline
         {
             IMessageHandler messageHandler = this.MessageHandlers.Single(x => x.MessageType == message.FrameMetaData.Type);
             await messageHandler.HandleAsync(message, connectedClients);
+        }
+
+        public async Task OnExceptionAsync(IClientInfo clientInfo, Exception exception)
+        {
+            await this.OnExceptionAsync(clientInfo.Socket, exception);
+        }
+
+        public async Task OnExceptionAsync(Socket clientSocket, Exception exception)
+        {
+            throw new NotImplementedException();
         }
     }
 }

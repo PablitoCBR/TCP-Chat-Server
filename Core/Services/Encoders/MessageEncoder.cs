@@ -1,11 +1,10 @@
-﻿
-using Core.Models;
+﻿using Core.Models;
 using Core.Models.Interfaces;
-using Core.Services.Interfaces;
+using Core.Services.Encoders.Interfaces;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Core.Services
+namespace Core.Services.Encoders
 {
     public class MessageEncoder : IMessageEncoder
     {
