@@ -1,36 +1,37 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using System.Threading.Tasks;
 
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 using Host.Listeners.Interfaces;
-using System.Threading.Tasks;
-using System.Collections.Concurrent;
-using Core.Models.Interfaces;
+
+using Core.Pipeline.Interfaces;
+
 using Core.Models;
 using Core.Models.Enums;
-using Microsoft.Extensions.Options;
 using Core.Models.Exceptions.UserFaultExceptions;
+using Core.Models.Interfaces;
+
 using Core.Services.Encoders.Interfaces;
-using Core.MessageHandlers.Interfaces;
-using Core.Pipeline.Interfaces;
+
+using Core.Security.Interfaces;
 
 namespace Host.Listeners
 {
     public class TcpListener : IListener
     {
         public ProtocolType ProtocolType { get; }
-
         public bool IsListening { get; private set; }
-
 
         private readonly ILogger<IListener> _logger;
 
         private readonly IServiceProvider _serviceProvider;
-
 
         private readonly ListennerSettings _listenerSettings;
 
@@ -40,8 +41,12 @@ namespace Host.Listeners
 
         private readonly FrameMetaDataConfiguration _frameMetaDataConfiguration;
 
+        private readonly ManualResetEvent _acceptEvent;
 
-        public TcpListener(ListennerSettings settings, IPEndPoint ipEndPoint, ILogger<IListener> logger, IOptions<FrameMetaDataConfiguration> frameMetaDataConfiguration, IServiceProvider serviceProvider)
+        private CancellationToken _cancellationToken;
+
+        public TcpListener(ListennerSettings settings, IPEndPoint ipEndPoint, ILogger<IListener> logger,
+            IOptions<FrameMetaDataConfiguration> frameMetaDataConfiguration, IServiceProvider serviceProvider)
         {
             ProtocolType = ProtocolType.Tcp;
             IsListening = false;
@@ -54,6 +59,7 @@ namespace Host.Listeners
             _frameMetaDataConfiguration = frameMetaDataConfiguration.Value;
 
             _serviceProvider = serviceProvider;
+            _acceptEvent = new ManualResetEvent(false);
 
             _logger.LogInformation("TCP Listener created and assigned to port: {0}", _ipEndPoint.Port);
         }
@@ -62,15 +68,17 @@ namespace Host.Listeners
         {
             _logger.LogInformation("Starting listening for TCP transimssions on port: {0}, IP: {1}", _ipEndPoint.Port, _ipEndPoint.Address.ToString());
 
+            _cancellationToken = cancellationToken;
             Socket listener = new Socket(_ipEndPoint.AddressFamily, SocketType.Stream, ProtocolType);
             listener.Bind(_ipEndPoint);
             listener.Listen(_listenerSettings.PendingConnectionsQueue);
             IsListening = true;
-
-            while (!cancellationToken.IsCancellationRequested)
+            
+            while (!_cancellationToken.IsCancellationRequested)
             {
-                Task<Socket> acceptTask = listener.AcceptAsync();
-                this.HandleConnectionAttemptAsync(acceptTask, cancellationToken).ConfigureAwait(false);
+                _acceptEvent.Reset();
+                listener.BeginAccept(new AsyncCallback(HandleConnectionAttemptAsync), listener);
+                _acceptEvent.WaitOne();
             }
 
             try
@@ -88,30 +96,34 @@ namespace Host.Listeners
             }
         }
 
-        private async Task HandleConnectionAttemptAsync(Task<Socket> acceptTask, CancellationToken cancellationToken)
+        private async void HandleConnectionAttemptAsync(IAsyncResult asyncResult)
         {
-            if (cancellationToken.IsCancellationRequested)
+            _acceptEvent.Set();
+
+            if (_cancellationToken.IsCancellationRequested)
                 return;
 
-            Socket connectedClientSocket = await acceptTask;
+            Socket connectedClientSocket = ((Socket)asyncResult).EndAccept(asyncResult);
+
             _logger.LogInformation("Connection accepted from: {0}", ((IPEndPoint)connectedClientSocket.RemoteEndPoint).Address.ToString());
 
             using (var scope = _serviceProvider.CreateScope())
             {
                 try
                 {
-                    byte[] frameMetaData = await ReceiveDataAsync(connectedClientSocket, _frameMetaDataConfiguration.MetaDataLength, cancellationToken);
+                    byte[] frameMetaData = await ReceiveDataAsync(connectedClientSocket, _frameMetaDataConfiguration.MetaDataLength);
                     IFrameMetaData metaData = scope.ServiceProvider.GetRequiredService<IFrameMetaEncoder>().Decode(frameMetaData);
 
                     if (!(metaData.Type == MessageType.RegistrationRequest || metaData.Type == MessageType.AuthenticationRequest))
                     {
                         await scope.ServiceProvider.GetRequiredService<IMessageDispatcher>().OnExceptionAsync(
                              connectedClientSocket,
-                             new InvalidMessageException(metaData.Type, "Only registration and authentication requests allowed."));
+                             new InvalidMessageException(metaData.Type, "Only registration and authentication requests allowed."),
+                             _cancellationToken);
                     }
                     else
                     {
-                        byte[] data = await this.ReceiveDataAsync(connectedClientSocket, metaData.HeadersDataLength + metaData.MessageDataLength, cancellationToken).ConfigureAwait(false);
+                        byte[] data = await this.ReceiveDataAsync(connectedClientSocket, metaData.HeadersDataLength + metaData.MessageDataLength).ConfigureAwait(false);
                         IMessage message = scope.ServiceProvider.GetRequiredService<IMessageEncoder>().Decode(data, metaData, ClientInfo.Create(0, string.Empty, connectedClientSocket));
 
                         if (metaData.Type == MessageType.RegistrationRequest)
@@ -122,24 +134,21 @@ namespace Host.Listeners
                         {
                             IClientInfo client = await scope.ServiceProvider.GetRequiredService<IAuthenticationHandler>().Authenticate(message).ConfigureAwait(false);
                             this.RegisterConnectedUser(client);
-                            this.ListenForMessagesAsync(client, cancellationToken);
+                            this.ListenForMessagesAsync(client);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    if (cancellationToken.IsCancellationRequested)
+                    if (_cancellationToken.IsCancellationRequested)
                         _logger.LogWarning("Listening caceled while receiving frame from: {0}", ((IPEndPoint)connectedClientSocket?.RemoteEndPoint)?.Address.ToString());
                     else
                     {
-                        await scope.ServiceProvider.GetRequiredService<IMessageDispatcher>().OnExceptionAsync(connectedClientSocket, ex);
-
                         _logger.LogError(ex, "Exception occured while receiving and creating frame metadata from: {0}. Check Logs for more info!",
                             ((IPEndPoint)connectedClientSocket?.RemoteEndPoint)?.Address.ToString());
                     }
 
-                    connectedClientSocket.Close();
-                    return;
+                    await scope.ServiceProvider.GetRequiredService<IMessageDispatcher>().OnExceptionAsync(connectedClientSocket, ex, _cancellationToken);
                 }
             }
         }
@@ -150,34 +159,26 @@ namespace Host.Listeners
             if (!result) _logger.LogError("Failed to add user with ID: {0} to ConnectedClients collection", clientInfo.Id);
         }
 
-        private async void ListenForMessagesAsync(IClientInfo clientInfo, CancellationToken cancellationToken)
+        private async void ListenForMessagesAsync(IClientInfo clientInfo)
         {
             using (var scope = _serviceProvider.CreateScope())
             {
-                while (!cancellationToken.IsCancellationRequested)
+                while (!_cancellationToken.IsCancellationRequested && clientInfo.Socket.Connected)
                 {
                     try
                     {
-                        byte[] frameMetaData = await this.ReceiveDataAsync(clientInfo.Socket, _frameMetaDataConfiguration.MetaDataLength, cancellationToken).ConfigureAwait(false);
+                        byte[] frameMetaData = await this.ReceiveDataAsync(clientInfo.Socket, _frameMetaDataConfiguration.MetaDataLength).ConfigureAwait(false);
                         IFrameMetaData frameMeta = scope.ServiceProvider.GetRequiredService<IFrameMetaEncoder>().Decode(frameMetaData);
 
-                        byte[] data = await this.ReceiveDataAsync(clientInfo.Socket, frameMeta.HeadersDataLength + frameMeta.MessageDataLength, cancellationToken).ConfigureAwait(false);
+                        byte[] data = await this.ReceiveDataAsync(clientInfo.Socket, frameMeta.HeadersDataLength + frameMeta.MessageDataLength).ConfigureAwait(false);
                         IMessage message = scope.ServiceProvider.GetRequiredService<IMessageEncoder>().Decode(data, frameMeta, clientInfo);
 
-                        await scope.ServiceProvider.GetRequiredService<IMessageDispatcher>().DispatchAsync(message, _connectedClients).ConfigureAwait(false);
+                        await scope.ServiceProvider.GetRequiredService<IMessageDispatcher>().DispatchAsync(message, _connectedClients, _cancellationToken).ConfigureAwait(false);
                     }
                     catch (Exception ex)
                     {
-                        if (ex is SocketException)
-                        {
-                            _logger.LogInformation("Connection with: {0} was closed by user.", clientInfo.Name);
-                            break;
-                        }
-                        else
-                        {
-                            await scope.ServiceProvider.GetRequiredService<IMessageDispatcher>().OnExceptionAsync(clientInfo, ex); // <- jezeli wyjatek był krytycznie handler zamknie socket co zostanei przechwycone przy kolejnej iteracji
-                            _logger.LogError(ex, "Exception occured while listening for messages from {0} ({1}).", clientInfo.Name, clientInfo.RemoteEndPoint.ToString());
-                        }
+                        _logger.LogError(ex, "Exception occured while listening for messages from {0} ({1}).", clientInfo.Name, clientInfo.RemoteEndPoint.ToString());
+                        await scope.ServiceProvider.GetRequiredService<IMessageDispatcher>().OnExceptionAsync(clientInfo, ex, _cancellationToken);
                     }
                 }
             }
@@ -188,15 +189,15 @@ namespace Host.Listeners
         }
 
 
-        private async Task<byte[]> ReceiveDataAsync(Socket clientSocket, int dataLength, CancellationToken cancellationToken)
+        private async Task<byte[]> ReceiveDataAsync(Socket clientSocket, int dataLength)
         {
-            if (cancellationToken.IsCancellationRequested)
-                return await Task.FromCanceled<byte[]>(cancellationToken);
+            if (_cancellationToken.IsCancellationRequested)
+                return await Task.FromCanceled<byte[]>(_cancellationToken);
 
             ArraySegment<byte> buffer = new ArraySegment<byte>(new byte[dataLength]);
             try
             {
-                await clientSocket.ReceiveAsync(buffer, SocketFlags.None, cancellationToken);
+                await clientSocket.ReceiveAsync(buffer, SocketFlags.None, _cancellationToken);
             }
             catch (AggregateException ex)
             {

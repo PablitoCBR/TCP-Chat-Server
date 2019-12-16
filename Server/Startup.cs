@@ -16,8 +16,6 @@ using Core.Models;
 using Core.Services.Encoders.Interfaces;
 using Core.Services.Encoders;
 using Core.Services.Security;
-using Core.MessageHandlers.Interfaces;
-using Core.MessageHandlers;
 using Core.Services.Security.Interfaces;
 using DAL.Repositories.Interfaces;
 using DAL.Repositories;
@@ -26,6 +24,8 @@ using Core.Pipeline.Interfaces;
 using Core.Pipeline;
 using Core.Services.Factories.Interfaces;
 using Core.Services.Factories;
+using Core.Security.Interfaces;
+using Core.Security;
 
 namespace Server
 {

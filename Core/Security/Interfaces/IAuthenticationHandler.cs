@@ -1,8 +1,9 @@
-﻿using Core.Models.Interfaces;
-using System.Threading.Tasks;
-
-namespace Core.MessageHandlers.Interfaces
+﻿namespace Core.Security.Interfaces
 {
+    using System.Threading.Tasks;
+
+    using Core.Models.Interfaces;
+
     public interface IAuthenticationHandler
     {
         Task RegisterAsync(IMessage message);

@@ -1,20 +1,24 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
-using Core.MessageHandlers.Interfaces;
-using Core.Models;
-using Core.Models.Exceptions.UserFaultExceptions;
-using Core.Models.Enums;
-using Core.Models.Interfaces;
-using Core.Services.Security.Interfaces;
-using DAL.Models;
-using DAL.Repositories.Interfaces;
-using Microsoft.Extensions.Logging;
-using Core.Services.Factories.Interfaces;
-
-namespace Core.MessageHandlers
+﻿namespace Core.Security
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Text;
+    using System.Threading.Tasks;
+
+    using Core.Models;
+    using Core.Models.Exceptions.UserFaultExceptions;
+    using Core.Models.Enums;
+    using Core.Models.Interfaces;
+
+    using Core.Services.Security.Interfaces;
+    using Core.Services.Factories.Interfaces;
+    using Core.Security.Interfaces;
+
+    using DAL.Models;
+    using DAL.Repositories.Interfaces;
+
+    using Microsoft.Extensions.Logging;
+
     public class AuthenticationHandler : IAuthenticationHandler
     {
         private readonly ISecurityService _securityService;
@@ -53,7 +57,7 @@ namespace Core.MessageHandlers
             return ClientInfo.Create(user.Id, user.Username, message.ClientInfo.Socket);
         }
 
-        public async Task RegisterAsync(IMessage message) // send info about success ( maybe with small delay?)
+        public async Task RegisterAsync(IMessage message) 
         {
             var (username, password) = this.GetCredentials(message.Headers);
 
@@ -64,7 +68,7 @@ namespace Core.MessageHandlers
 
             await _userRepository.AddAsync(new User(username, passwordHash, salt, DateTime.Now, message.ClientInfo.RemoteEndPoint.ToString()));
             _logger.LogInformation("Registered new user. Username: {0}, Connected from IP: {1}.", username, message.ClientInfo.RemoteEndPoint);
-            message.ClientInfo.Socket.Send(_messageFactory.CreateBytes(message.ClientInfo, MessageType.Registered, new Dictionary<string, string>())); // specify headers
+            message.ClientInfo.Socket.Send(_messageFactory.CreateBytes(message.ClientInfo, MessageType.Registered, new Dictionary<string, string>())); 
         }
 
         private (string username, string password) GetCredentials(IDictionary<string, string> headers)
