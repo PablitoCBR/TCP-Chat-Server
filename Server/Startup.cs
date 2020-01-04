@@ -17,15 +17,22 @@ using Core.Services.Encoders.Interfaces;
 using Core.Services.Encoders;
 using Core.Services.Security;
 using Core.Services.Security.Interfaces;
+
 using DAL.Repositories.Interfaces;
 using DAL.Repositories;
 using DAL;
+
 using Core.Pipeline.Interfaces;
 using Core.Pipeline;
 using Core.Services.Factories.Interfaces;
 using Core.Services.Factories;
-using Core.Security.Interfaces;
-using Core.Security;
+using Core.Handlers.Security.Interfaces;
+using Core.Handlers.Security;
+using Core.Handlers.ExceptionHandlers.Interfaces;
+using Core.Handlers.ExceptionHandlers;
+using Core.Models.Exceptions.UserFaultExceptions;
+using Core.Handlers.MessageHandlers.Interfaces;
+using Core.Handlers.MessageHandlers;
 
 namespace Server
 {
@@ -33,28 +40,29 @@ namespace Server
     {
         public override IServiceProvider ConfigureServices(IServiceCollection services)
         {
-            Log.Logger = new LoggerConfiguration().ReadFrom.Configuration(Configuration).CreateLogger();
+            Log.Logger = new LoggerConfiguration()
+                .ReadFrom
+                .Configuration(Configuration)
+                .CreateLogger();
+
             services.AddLogging(cfg => cfg.AddSerilog());
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-            ConfigureOptions(services);
+            this.ConfigureOptions(services);
+            this.ConfigureEncoders(services);
+            this.ConfigureMessageHandlers(services);
+            this.ConfigureExceptionHandlers(services);
 
             services.AddSingleton<IHostBuilder, HostBuilder>();
 
             services.AddTransient<IListenerFabric, ListenerFabric>();
-
-            services.AddTransient<IFrameMetaEncoder, FrameMetaEncoder>();
-            services.AddTransient<IHeadersEncoder, HeadersEncoder>();
-            services.AddTransient<IMessageEncoder, MessageEncoder>();
-
-            services.AddTransient<ISecurityService, SecurityService>();
             services.AddTransient<IMessageFactory, MessageFactory>();
 
-            services.AddTransient<IUserRepository, UserRepository>();
+            services.AddTransient<ISecurityService, SecurityService>();
 
             services.AddDbContext<ChattyDbContext>();
+            services.AddTransient<IUserRepository, UserRepository>();
 
-            this.ConfigureMessageHandlers(services);
             return services.BuildServiceProvider();
         }
 
@@ -64,13 +72,32 @@ namespace Server
             services.AddOptions<HostBuilderSettings>().Bind(Configuration.GetSection(nameof(HostBuilderSettings))).ValidateDataAnnotations();
             services.AddOptions<FrameMetaDataConfiguration>().Bind(Configuration.GetSection(nameof(FrameMetaDataConfiguration)))
                 .ValidateDataAnnotations()
-                .PostConfigure(config => config.MetaDataLength = config.SenderIdLength + config.HeadersDataLength + config.MessageDataLength + 1);
+                .PostConfigure(config => config.MetaDataFieldsTotalSize = 1 + config.HeadersLengthFieldSize + config.MessageLengthFieldSize);
         }
 
         private void ConfigureMessageHandlers(IServiceCollection services)
         {
             services.AddTransient<IMessageDispatcher, MessageDispatcher>();
+        
             services.AddTransient<IAuthenticationHandler, AuthenticationHandler>();
+
+            services.AddTransient<IMessageHandler, SendRequestMessageHandler>();
+            services.AddTransient<IMessageHandler, DHKeyExchangeRequestMessageHandler>();
+            services.AddTransient<IMessageHandler, DHKeyExchangeStepMessageHandler>();
+            services.AddTransient<IMessageHandler, ActiveUsersUpdateRequestMessageHandler>();
+        }
+
+        private void ConfigureExceptionHandlers(IServiceCollection services)
+        {
+            services.AddTransient<IExceptionHandler<AuthenticationException>, AuthenticationExceptionHandler>();
+            services.AddTransient<IExceptionHandler<InvalidMessageException>, InvalidMessageExceptionHandler>();  
+        }
+
+        private void ConfigureEncoders(IServiceCollection services)
+        {
+            services.AddTransient<IFrameMetaEncoder, FrameMetaEncoder>();
+            services.AddTransient<IHeadersEncoder, HeadersEncoder>();
+            services.AddTransient<IMessageEncoder, MessageEncoder>();
         }
     }
 }

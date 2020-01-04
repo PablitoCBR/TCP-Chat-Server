@@ -6,7 +6,6 @@
 
   <ItemGroup>
     <Folder Include="Builder\Models\Exceptions\" />
-    <Folder Include="Listeners\Exceptions\" />
   </ItemGroup>
 
   <ItemGroup>

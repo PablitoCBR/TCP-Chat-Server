@@ -9,8 +9,6 @@ namespace Core.Services.Encoders.Interfaces
 
         byte[] Encode(IFrameMetaData frameMetaData);
 
-        int GetSenderId(byte[] frameMetaData);
-
         MessageType GetMessageType(byte[] frameMetaData);
 
         int GetHeadersDataLength(byte[] frameMetaData);

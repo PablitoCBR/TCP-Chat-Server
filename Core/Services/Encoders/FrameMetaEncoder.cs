@@ -1,13 +1,15 @@
-﻿using Core.Models;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+
+using Core.Models;
 using Core.Models.Enums;
-using Core.Models.Exceptions;
+using Core.Models.Exceptions.ServerExceptions;
 using Core.Models.Interfaces;
+
 using Core.Services.Encoders.Interfaces;
 
 using Microsoft.Extensions.Options;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Core.Services.Encoders
 {
@@ -23,7 +25,6 @@ namespace Core.Services.Encoders
         public IFrameMetaData Decode(byte[] frameMetaData)
             => new FrameMetaData(
                 this.GetMessageType(frameMetaData),
-                this.GetSenderId(frameMetaData),
                 this.GetHeadersDataLength(frameMetaData),
                 this.GetMessageDataLength(frameMetaData)
                 );
@@ -31,7 +32,6 @@ namespace Core.Services.Encoders
         public byte[] Encode(IFrameMetaData frameMetaData)
         {
             List<byte> encodedMetaData = new List<byte>() { (byte)frameMetaData.Type };
-            encodedMetaData.AddRange(BitConverter.GetBytes(frameMetaData.SenderID));
             encodedMetaData.AddRange(BitConverter.GetBytes(frameMetaData.HeadersDataLength));
             encodedMetaData.AddRange(BitConverter.GetBytes(frameMetaData.MessageDataLength));
             return encodedMetaData.ToArray();
@@ -39,29 +39,23 @@ namespace Core.Services.Encoders
 
         public int GetHeadersDataLength(byte[] frameMetaData)
         {
-            int numberOfBytesBefore = 1 + this._configuration.SenderIdLength;
-            IEnumerable<byte> headersLengthBytes = frameMetaData.Skip(numberOfBytesBefore).Take(this._configuration.HeadersDataLength);
+            IEnumerable<byte> headersLengthBytes = frameMetaData.Skip(1).Take(_configuration.HeadersLengthFieldSize);
             return BitConverter.ToInt32(headersLengthBytes.ToArray());
         }
 
         public int GetMessageDataLength(byte[] frameMetaData)
         {
-            int numberOfBytesBefore = 1 + this._configuration.SenderIdLength + this._configuration.HeadersDataLength;
-            IEnumerable<byte> messageLengthBytes = frameMetaData.Skip(numberOfBytesBefore).Take(this._configuration.MessageDataLength);
+            IEnumerable<byte> messageLengthBytes = frameMetaData
+                .Skip(_configuration.MetaDataFieldsTotalSize - _configuration.MessageLengthFieldSize)
+                .Take(this._configuration.MessageLengthFieldSize);
             return BitConverter.ToInt32(messageLengthBytes.ToArray());
         }
 
         public MessageType GetMessageType(byte[] frameMetaData)
         {
             if (!Enum.IsDefined(typeof(MessageType), frameMetaData[0]) || (MessageType)frameMetaData[0] == MessageType.None)
-                throw new UnsupportedMessageTypeException(frameMetaData[0], "Message frame mata data was containing unrecognized message type code.");
+                throw new UnsupportedMessageTypeException(frameMetaData[0], MessageType.UnrecognizedMessageType, "Message frame mata data was containing unrecognized message type code.");
             return (MessageType)frameMetaData[0];
-        }
-
-        public int GetSenderId(byte[] frameMetaData)
-        {
-            IEnumerable<byte> senderIdByte = frameMetaData.Skip(1).Take(this._configuration.SenderIdLength);
-            return BitConverter.ToInt32(senderIdByte.ToArray());
         }
     }
 }

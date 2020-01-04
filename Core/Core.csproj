@@ -12,9 +12,4 @@
     <ProjectReference Include="..\DAL\DAL.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Handlers\ExceptionHandlers\Interfaces\" />
-    <Folder Include="Models\Exceptions\ServerExceptions\" />
-  </ItemGroup>
-
 </Project>

@@ -1,23 +1,27 @@
-﻿namespace Core.Security
+﻿namespace Core.Handlers.Security
 {
     using System;
     using System.Collections.Generic;
+    using System.Net.Sockets;
     using System.Text;
     using System.Threading.Tasks;
 
     using Core.Models;
+    using Core.Models.Consts;
     using Core.Models.Exceptions.UserFaultExceptions;
     using Core.Models.Enums;
     using Core.Models.Interfaces;
 
     using Core.Services.Security.Interfaces;
     using Core.Services.Factories.Interfaces;
-    using Core.Security.Interfaces;
+
+    using Core.Handlers.Security.Interfaces;
 
     using DAL.Models;
     using DAL.Repositories.Interfaces;
 
     using Microsoft.Extensions.Logging;
+    using System.Threading;
 
     public class AuthenticationHandler : IAuthenticationHandler
     {
@@ -37,7 +41,7 @@
             _messageFactory = messageFactory;
         }
 
-        public async Task<IClientInfo> Authenticate(IMessage message) 
+        public async Task<IClientInfo> Authenticate(IMessage message, CancellationToken cancellationToken) 
         {
             var (username, password) = this.GetCredentials(message.Headers);
             User user = await _userRepository.GetByNameAsync(username);
@@ -52,12 +56,19 @@
             }
 
             _logger.LogInformation("User {0} was authenticated successfully.", username);
-            message.ClientInfo.Socket.Send(_messageFactory.CreateBytes(message.ClientInfo, MessageType.Authenticated, new Dictionary<string, string>())); // specify headers
 
-            return ClientInfo.Create(user.Id, user.Username, message.ClientInfo.Socket);
+            byte[] responseMessage = _messageFactory.CreateBytes(MessageType.Authenticated);
+            await message.ClientInfo.Socket.SendAsync(new ArraySegment<byte>(responseMessage), SocketFlags.None, cancellationToken); 
+            IClientInfo clientInfo = ClientInfo.Create(user.Id, user.Username, message.ClientInfo.Socket);
+
+            user.LastConnected = DateTime.Now;
+            if (!String.Equals(clientInfo.RemoteEndPoint.Address.ToString(), user.LastKnownIPAddress))
+                user.LastKnownIPAddress = clientInfo.RemoteEndPoint.Address.ToString();
+
+            return clientInfo;
         }
 
-        public async Task RegisterAsync(IMessage message) 
+        public async Task RegisterAsync(IMessage message, CancellationToken cancellationToken) 
         {
             var (username, password) = this.GetCredentials(message.Headers);
 
@@ -67,16 +78,19 @@
             var (passwordHash, salt) = _securityService.GenerateHash(password);
 
             await _userRepository.AddAsync(new User(username, passwordHash, salt, DateTime.Now, message.ClientInfo.RemoteEndPoint.ToString()));
+
             _logger.LogInformation("Registered new user. Username: {0}, Connected from IP: {1}.", username, message.ClientInfo.RemoteEndPoint);
-            message.ClientInfo.Socket.Send(_messageFactory.CreateBytes(message.ClientInfo, MessageType.Registered, new Dictionary<string, string>())); 
+
+            byte[] confirmationMessage = _messageFactory.CreateBytes(MessageType.Registered);
+            await message.ClientInfo.Socket.SendAsync(new ArraySegment<byte>(confirmationMessage), SocketFlags.None, cancellationToken); 
         }
 
         private (string username, string password) GetCredentials(IDictionary<string, string> headers)
         {
-            if (!headers.ContainsKey("Authentication"))
+            if (!headers.ContainsKey(MessageHeaders.Authentication))
                 throw new AuthenticationException(MessageType.Unauthenticated, "Authentication header was not found.");
 
-            string credentialsBase64 = headers["Authentication"];
+            string credentialsBase64 = headers[MessageHeaders.Authentication];
             string credentailsString = Encoding.ASCII.GetString(Convert.FromBase64String(credentialsBase64));
             string[] credentials = credentailsString.Split(':');
             return (credentials[0], credentials[1]);

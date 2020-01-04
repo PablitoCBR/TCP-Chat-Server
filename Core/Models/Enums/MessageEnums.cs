@@ -24,27 +24,32 @@
         /// </summary>
         Authenticated = 0x03,
 
+        /// <summary>
+        /// Message sent to recipient confirmation.
+        /// </summary>
+        MessageSent = 0x04,
+
         // ================================ Message user requests codes (51 - 100) ========================================= //
 
         /// <summary>
         /// Data contains message addressed to user specified in header.
         /// </summary>
-        MessageSendRequest = 0x32,
+        MessageSendRequest = 0x33,
 
         /// <summary>
         /// Message contains data required to perform DH key exchange.
         /// </summary>
-        DHKeyExchangeRequest = 0x33,
+        DHKeyExchangeRequest = 0x34,
 
         /// <summary>
         /// Step of DH key exchange.
         /// </summary>
-        DHKeyExchangeStep = 0x34,
+        DHKeyExchangeStep = 0x35,
 
         /// <summary>
         /// Message contains data required to registration.
         /// </summary>
-        RegistrationRequest = 0x35,
+        RegistrationRequest = 0x36,
 
         /// <summary>
         /// Message contains user credentials to perform authentication.
@@ -61,14 +66,29 @@
         /// <summary>
         /// User credentials are not valid. More information in message data.
         /// </summary>
-        Unauthenticated = 0x10,
+        Unauthenticated = 0x65,
 
         /// <summary>
         /// Failed to register. More information in message data.
         /// </summary>
-        RegistrationFailed = 0x11,
+        RegistrationFailed = 0x66,
+
+        /// <summary>
+        /// Message was missing required header.
+        /// </summary>
+        MissingHeader = 0x67,
 
         // ================================ Server fault error codes (201 - 256) =============================== //
+
+        /// <summary>
+        /// Client was unreachable by server.
+        /// </summary>
+        ClientUnreachable = 0xC9,
+
+        /// <summary>
+        /// Message type code was unrecognized by server.
+        /// </summary>
+        UnrecognizedMessageType = 0xCA,
 
         /// <summary>
         /// Internal server error. Unhandled exception occured.

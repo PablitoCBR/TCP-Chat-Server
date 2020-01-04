@@ -20,7 +20,7 @@ using Core.Models.Interfaces;
 
 using Core.Services.Encoders.Interfaces;
 
-using Core.Security.Interfaces;
+using Core.Handlers.Security.Interfaces;
 
 namespace Host.Listeners
 {
@@ -66,14 +66,15 @@ namespace Host.Listeners
 
         public void Listen(CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Starting listening for TCP transimssions on port: {0}, IP: {1}", _ipEndPoint.Port, _ipEndPoint.Address.ToString());
-
+            _logger.LogInformation("Starting listening for TCP connections on port: {0}, IP: {1}", _ipEndPoint.Port, _ipEndPoint.Address.MapToIPv4().ToString());
             _cancellationToken = cancellationToken;
-            Socket listener = new Socket(_ipEndPoint.AddressFamily, SocketType.Stream, ProtocolType);
+
+            Socket listener = new Socket(_ipEndPoint.AddressFamily, SocketType.Stream, this.ProtocolType);
             listener.Bind(_ipEndPoint);
             listener.Listen(_listenerSettings.PendingConnectionsQueue);
+
             IsListening = true;
-            
+
             while (!_cancellationToken.IsCancellationRequested)
             {
                 _acceptEvent.Reset();
@@ -104,38 +105,31 @@ namespace Host.Listeners
                 return;
 
             Socket connectedClientSocket = ((Socket)asyncResult).EndAccept(asyncResult);
-
             _logger.LogInformation("Connection accepted from: {0}", ((IPEndPoint)connectedClientSocket.RemoteEndPoint).Address.ToString());
 
             using (var scope = _serviceProvider.CreateScope())
             {
                 try
                 {
-                    byte[] frameMetaData = await ReceiveDataAsync(connectedClientSocket, _frameMetaDataConfiguration.MetaDataLength);
+                    byte[] frameMetaData = await ReceiveDataAsync(connectedClientSocket, _frameMetaDataConfiguration.MetaDataFieldsTotalSize);
                     IFrameMetaData metaData = scope.ServiceProvider.GetRequiredService<IFrameMetaEncoder>().Decode(frameMetaData);
 
                     if (!(metaData.Type == MessageType.RegistrationRequest || metaData.Type == MessageType.AuthenticationRequest))
-                    {
-                        await scope.ServiceProvider.GetRequiredService<IMessageDispatcher>().OnExceptionAsync(
-                             connectedClientSocket,
-                             new InvalidMessageException(metaData.Type, "Only registration and authentication requests allowed."),
-                             _cancellationToken);
-                    }
+                        throw new InvalidMessageException(metaData.Type, "Only registration and authentication requests allowed.");
+
+
+                    byte[] data = await this.ReceiveDataAsync(connectedClientSocket, metaData.HeadersDataLength + metaData.MessageDataLength).ConfigureAwait(false);
+                    IMessage message = scope.ServiceProvider.GetRequiredService<IMessageEncoder>().Decode(data, metaData, ClientInfo.Create(0, string.Empty, connectedClientSocket));
+
+                    IAuthenticationHandler authenticationHandler = scope.ServiceProvider.GetRequiredService<IAuthenticationHandler>();
+
+                    if (metaData.Type == MessageType.RegistrationRequest)
+                        await authenticationHandler.RegisterAsync(message, _cancellationToken).ConfigureAwait(false);
                     else
                     {
-                        byte[] data = await this.ReceiveDataAsync(connectedClientSocket, metaData.HeadersDataLength + metaData.MessageDataLength).ConfigureAwait(false);
-                        IMessage message = scope.ServiceProvider.GetRequiredService<IMessageEncoder>().Decode(data, metaData, ClientInfo.Create(0, string.Empty, connectedClientSocket));
-
-                        if (metaData.Type == MessageType.RegistrationRequest)
-                        {
-                            await scope.ServiceProvider.GetRequiredService<IAuthenticationHandler>().RegisterAsync(message);
-                        }
-                        else
-                        {
-                            IClientInfo client = await scope.ServiceProvider.GetRequiredService<IAuthenticationHandler>().Authenticate(message).ConfigureAwait(false);
-                            this.RegisterConnectedUser(client);
-                            this.ListenForMessagesAsync(client);
-                        }
+                        IClientInfo client = await authenticationHandler.Authenticate(message, _cancellationToken).ConfigureAwait(false);
+                        this.RegisterConnectedUser(client);
+                        this.ListenForMessagesAsync(client);
                     }
                 }
                 catch (Exception ex)
@@ -156,7 +150,12 @@ namespace Host.Listeners
         private void RegisterConnectedUser(IClientInfo clientInfo)
         {
             bool result = _connectedClients.TryAdd(clientInfo.Name, clientInfo);
-            if (!result) _logger.LogError("Failed to add user with ID: {0} to ConnectedClients collection", clientInfo.Id);
+
+            if (!result)
+            {
+                _logger.LogError("Failed to add user with ID: {0} to connected clients collection.", clientInfo.Id);
+                throw new Exception($"Failed to add user with ID: {clientInfo.Id} to connected clients collection of type {_connectedClients.GetType().Name}.");
+            }
         }
 
         private async void ListenForMessagesAsync(IClientInfo clientInfo)
@@ -167,7 +166,7 @@ namespace Host.Listeners
                 {
                     try
                     {
-                        byte[] frameMetaData = await this.ReceiveDataAsync(clientInfo.Socket, _frameMetaDataConfiguration.MetaDataLength).ConfigureAwait(false);
+                        byte[] frameMetaData = await this.ReceiveDataAsync(clientInfo.Socket, _frameMetaDataConfiguration.MetaDataFieldsTotalSize).ConfigureAwait(false);
                         IFrameMetaData frameMeta = scope.ServiceProvider.GetRequiredService<IFrameMetaEncoder>().Decode(frameMetaData);
 
                         byte[] data = await this.ReceiveDataAsync(clientInfo.Socket, frameMeta.HeadersDataLength + frameMeta.MessageDataLength).ConfigureAwait(false);

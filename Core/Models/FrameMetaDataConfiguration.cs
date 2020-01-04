@@ -5,18 +5,14 @@ namespace Core.Models
 {
     public class FrameMetaDataConfiguration
     {
-        public int MetaDataLength { get; set; }
-
-        [Required(ErrorMessage = "Specify sender ID length.")]
-        [Range(0, Int32.MaxValue)]
-        public int SenderIdLength { get; set; }
+        public int MetaDataFieldsTotalSize { get; set; }
 
         [Required(ErrorMessage = "Specify headers data length.")]
         [Range(0, Int32.MaxValue)]
-        public int HeadersDataLength { get; set; }
+        public int HeadersLengthFieldSize { get; set; }
 
         [Required(ErrorMessage = "Specify message data length.")]
         [Range(0, Int32.MaxValue)]
-        public int MessageDataLength { get; set; }
+        public int MessageLengthFieldSize { get; set; }
     }
 }

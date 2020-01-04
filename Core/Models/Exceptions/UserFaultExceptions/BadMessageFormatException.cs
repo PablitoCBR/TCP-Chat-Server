@@ -2,9 +2,9 @@
 
 namespace Core.Models.Exceptions.UserFaultExceptions
 {
-    public class AuthenticationException : AbstractException
+    public class BadMessageFormatException : AbstractException
     {
-        public AuthenticationException(MessageType responseMessageType, string message = "")
+        public BadMessageFormatException(MessageType responseMessageType, string message = "") 
             : base(responseMessageType, message)
         {
 

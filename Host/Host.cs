@@ -27,10 +27,7 @@ namespace Host
             //this._logger.LogInformation("Starting TCP Listerner.");
             Task.Factory.StartNew(() => this._tcpListener.Listen(this._cancellationTokenSource.Token), this._cancellationTokenSource.Token);
             this._isActive = true;
-            while(true)
-            {
-
-            }
+            while (true) { }
         }
 
         public void Reset()
