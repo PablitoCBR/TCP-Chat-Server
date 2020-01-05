@@ -50,5 +50,8 @@ namespace Core.Services.Factories
 
         public byte[] CreateBytes(MessageType messageType)
             => this.CreateBytes(messageType, new Dictionary<string, string>());
+
+        public byte[] CreateBytes(MessageType messageType, string message)
+            => this.CreateBytes(messageType, new Dictionary<string, string>(), message);
     }
 }

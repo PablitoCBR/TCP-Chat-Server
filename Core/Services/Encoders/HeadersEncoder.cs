@@ -15,6 +15,9 @@ namespace Core.Services.Encoders
             IDictionary<string, string> headers = new Dictionary<string, string>();
             foreach(string headerLine in headersLines)
             {
+                if (string.IsNullOrWhiteSpace(headerLine))
+                    continue;
+
                 string[] header = headerLine.Split(':');
                 if (header.Length != 2)
                     throw new ArgumentException("Invalid header format.");
@@ -32,9 +35,8 @@ namespace Core.Services.Encoders
 
             StringBuilder stringBuilder = new StringBuilder();
             foreach (KeyValuePair<string, string> header in headers)
-                stringBuilder.AppendFormat("\"{2}\":\"{1}\"\n", header.Key, header.Value);
+                stringBuilder.AppendFormat("{0}:{1}\n", header.Key, header.Value);
 
-            stringBuilder.Remove(stringBuilder.Length, 1);
             string headersString = stringBuilder.ToString();
             return Encoding.ASCII.GetBytes(headersString);
         }

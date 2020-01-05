@@ -8,11 +8,14 @@ using System.Threading.Tasks;
 
 using Core.Handlers.ExceptionHandlers.Interfaces;
 using Core.Handlers.MessageHandlers.Interfaces;
+
 using Core.Models.Enums;
 using Core.Models.Interfaces;
 
 using Core.Pipeline.Interfaces;
+
 using Core.Services.Factories.Interfaces;
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -55,8 +58,9 @@ namespace Core.Pipeline
                 await exceptionHandler.HandleExceptionAsync(exception, clientSocket, cancellationToken);
             else 
             {
-                _logger.LogCritical(exception, "Unhandled exception occured. Message: {0}", exception.Message);
-                byte[] errorMessage = _serviceProvider.GetRequiredService<IMessageFactory>().CreateBytes(MessageType.InternalServerError);
+                Guid unhandledExceptionGuid = Guid.NewGuid();
+                _logger.LogCritical(exception, "{0} Unhandled exception occured. Message: {1}", unhandledExceptionGuid.ToString(), exception.Message);
+                byte[] errorMessage = _serviceProvider.GetRequiredService<IMessageFactory>().CreateBytes(MessageType.InternalServerError, unhandledExceptionGuid.ToString());
                 await clientSocket.SendAsync(new ArraySegment<byte>(errorMessage), SocketFlags.None, cancellationToken);
             }
         }

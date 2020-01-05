@@ -12,6 +12,8 @@ namespace Core.Services.Factories.Interfaces
 
         byte[] CreateBytes(MessageType messageType);
 
+        byte[] CreateBytes(MessageType messageType, string message);
+
         byte[] CreateBytes(MessageType messageType, IDictionary<string, string> headers, string message = "");
 
         byte[] CreateBytes(MessageType messageType, IDictionary<string, string> headers, byte[] messageData);

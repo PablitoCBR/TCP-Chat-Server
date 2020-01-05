@@ -12,135 +12,188 @@ namespace Client
 {
     class Program
     {
+        const byte RegistrationRequest = 0x36;
+        const byte AuthenticationRequest = 0x37;
+        const byte MessageSendRequest = 0x33;
+        const byte Registered = 0x02;
+        const byte Authenticated = 0x03;
+        const byte MessageSent = 0x04;
+
+        const int Port = 8000;
+
+        static string Username;
+        static string Password;
+
+        static Socket socket;
+        static IPAddress ipAddress;
+
         static void Main(string[] args)
         {
+            IPHostEntry ipHost = Dns.GetHostEntry(Dns.GetHostName());
+            ipAddress = ipHost.AddressList[0];
+
             try
             {
+                CollectCredentials();
 
-                // Establish the remote endpoint  
-                // for the socket. This example  
-                // uses port 11111 on the local  
-                // computer. 
-                IPHostEntry ipHost = Dns.GetHostEntry(Dns.GetHostName());
-                IPAddress ipAddr = ipHost.AddressList[0];
-                IPEndPoint localEndPoint = new IPEndPoint(ipAddr, 8000);
+                Console.Clear();
 
-                // Creation TCP/IP Socket using  
-                // Socket Class Costructor 
-                Socket sender = new Socket(ipAddr.AddressFamily,
-                           SocketType.Stream, ProtocolType.Tcp);
-
-                try
+                // Login / register
+                string action = string.Empty;
+                do
                 {
+                    Console.WriteLine("What you want to do?");
+                    Console.WriteLine("1. Regiser");
+                    Console.WriteLine("2. Login");
+                    Console.Write("Choice: ");
+                    action = Console.ReadLine();
+                    Console.Clear();
 
-                    // Connect Socket to the remote  
-                    // endpoint using method Connect() 
-                    sender.Connect(localEndPoint);
-
-                    // We print EndPoint information  
-                    // that we are connected 
-                    Console.WriteLine("Socket connected to -> {0} ",
-                                  sender.RemoteEndPoint.ToString());
-
-                    // Creation of messagge that 
-                    // we will send to Server 
-                    byte[] type = new byte[] { 0x35 };
-                    byte[] headers = Encoding.ASCII.GetBytes("Authentication:" + Convert.ToBase64String(Encoding.ASCII.GetBytes("pablito:password")));
-                    byte[] id = BitConverter.GetBytes(0);
-                    byte[] messageLength = BitConverter.GetBytes(0);
-                    byte[] headersLEngth = BitConverter.GetBytes(headers.Length);
-                    List<byte> message = new List<byte>();
-                    message.AddRange(type);
-                    message.AddRange(id);
-                    message.AddRange(headersLEngth);
-                    message.AddRange(messageLength);
-                    message.AddRange(headers);
-
-                    int byteSent = sender.Send(message.ToArray());
-
-                    // Data buffer 
-                    byte[] messageReceived = new byte[1024];
-
-                    // We receive the messagge using  
-                    // the method Receive(). This  
-                    // method returns number of bytes 
-                    // received, that we'll use to  
-                    // convert them to string 
-
-
-
-                    int byteRecv = sender.Receive(messageReceived);
-                    Console.WriteLine("Message from Server -> {0}",
-                          Encoding.ASCII.GetString(messageReceived,
-                                                     0, byteRecv));
-
-                    Console.WriteLine("Press any key to log in");
-                    Console.ReadKey();
-
-                    sender.Close();
-                    sender  = new Socket(ipAddr.AddressFamily,
-                           SocketType.Stream, ProtocolType.Tcp);
-                    sender.Connect(localEndPoint);
-
-                    type = new byte[] { 0x36 };
-                    headers = Encoding.ASCII.GetBytes("Authentication:" + Convert.ToBase64String(Encoding.ASCII.GetBytes("pablito:password")));
-                    id = BitConverter.GetBytes(0);
-                    messageLength = BitConverter.GetBytes(0);
-                    headersLEngth = BitConverter.GetBytes(headers.Length);
-                    message = new List<byte>();
-                    message.AddRange(type);
-                    message.AddRange(id);
-                    message.AddRange(headersLEngth);
-                    message.AddRange(messageLength);
-                    message.AddRange(headers);
-
-                    byteSent = sender.Send(message.ToArray());
-
-                    // Data buffer 
-                    messageReceived = new byte[1024];
-
-                    // We receive the messagge using  
-                    // the method Receive(). This  
-                    // method returns number of bytes 
-                    // received, that we'll use to  
-                    // convert them to string 
-
-
-
-                    byteRecv = sender.Receive(messageReceived);
-                    Console.WriteLine("Message from Server -> {0}",
-                          Encoding.ASCII.GetString(messageReceived,
-                                                     0, byteRecv));
-
-                    Console.WriteLine("Press any key to close");
-                    Console.ReadKey();
-                    sender.Close();
+                    switch (action)
+                    {
+                        case "1":
+                            Register();
+                            break;
+                        case "2":
+                            Login();
+                            break;
+                        default:
+                            break;
+                    }
                 }
+                while (!string.Equals(action,"2"));
 
-                // Manage of Socket's Exceptions 
-                catch (ArgumentNullException ane)
+
+                while(true)
                 {
+                    Console.Write("Recipient: ");
+                    string recipient = Console.ReadLine();
+                    Console.Write("Message: ");
+                    string message = Console.ReadLine();
 
-                    Console.WriteLine("ArgumentNullException : {0}", ane.ToString());
-                }
-
-                catch (SocketException se)
-                {
-
-                    Console.WriteLine("SocketException : {0}", se.ToString());
-                }
-
-                catch (Exception e)
-                {
-                    Console.WriteLine("Unexpected exception : {0}", e.ToString());
+                    SendMessage(recipient, message, socket);
+                    Console.WriteLine();
                 }
             }
-
-            catch (Exception e)
+            catch(Exception ex)
             {
-
-                Console.WriteLine(e.ToString());
+                Console.WriteLine($"Exceptino occured. Message: {ex.Message}");
             }
+        }
+
+        static void SendMessage(string recipient, string message, Socket socket)
+        {
+            string headerString = $"recipient:{recipient}\n";
+            byte[] headers = Encoding.ASCII.GetBytes(headerString);
+            byte[] messageBytes = Encoding.ASCII.GetBytes(message);
+            List<byte> data = new List<byte> { MessageSendRequest };
+            data.AddRange(BitConverter.GetBytes(headers.Length));
+            data.AddRange(BitConverter.GetBytes(messageBytes.Length));
+            data.AddRange(headers);
+            data.AddRange(messageBytes);
+            byte[] messageData = data.ToArray();
+
+            Console.WriteLine($"Sending message to {recipient}.");
+            socket.Send(messageData);
+            byte[] response = ReciveMessage();
+
+            if(response[0] == MessageSent)
+                Console.WriteLine($"Message sent to {recipient}");
+            else
+            {
+                Console.WriteLine("Failed to send message...");
+            }
+        }
+
+        static void Register()
+        {
+            // Try to connect to server.
+            Console.WriteLine("Server connection attempt.");
+            socket = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            IPEndPoint localEndPoint = new IPEndPoint(ipAddress, Port);
+            socket.Connect(localEndPoint);
+            Console.WriteLine("Listener connected to server.");
+
+            socket.Send(GetRegistrationMessageBytes());
+            byte[] mesasge = ReciveMessage();
+
+            if(mesasge[0] != Registered)
+            {
+                Console.WriteLine("Registration failed!");
+                throw new Exception("Registratino failed");
+            }
+        }
+
+        static void Login()
+        {
+            // Try to connect to server.
+            Console.WriteLine("Server connection attempt.");
+            socket = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            IPEndPoint localEndPoint = new IPEndPoint(ipAddress, Port);
+            socket.Connect(localEndPoint);
+            Console.WriteLine("Listener connected to server.");
+
+            socket.Send(GetAuthentiactionMessageBytes());
+            byte[] message = ReciveMessage();
+
+            if(message[0] != Authenticated)
+            {
+                Console.WriteLine("Authentication failed!");
+                throw new Exception("Authentication failed.");
+            }
+        }
+
+        static void CollectCredentials()
+        {
+            Console.Write("Username: ");
+            Username = Console.ReadLine();
+            Console.Write("Password: ");
+            Password = Console.ReadLine();
+            Console.Clear();
+        }
+
+        static byte[] GetAuthentiactionMessageBytes()
+        {
+            byte[] headers = Encoding.ASCII.GetBytes("authentication:" + Convert.ToBase64String(Encoding.ASCII.GetBytes($"{Username}:{Password}")));
+            byte[] messageLength = BitConverter.GetBytes(0);
+            byte[] headersLength = BitConverter.GetBytes(headers.Length);
+            List<byte> data = new List<byte> { AuthenticationRequest };
+            data.AddRange(headersLength);
+            data.AddRange(messageLength);
+            data.AddRange(headers);
+            return data.ToArray();
+        }
+
+        static byte[] GetRegistrationMessageBytes()
+        {
+            byte[] headers = Encoding.ASCII.GetBytes("authentication:" + Convert.ToBase64String(Encoding.ASCII.GetBytes($"{Username}:{Password}")));
+            byte[] messageLength = BitConverter.GetBytes(0);
+            byte[] headersLength = BitConverter.GetBytes(headers.Length);
+            List<byte> data = new List<byte> { RegistrationRequest };
+            data.AddRange(headersLength);
+            data.AddRange(messageLength);
+            data.AddRange(headers);
+            return data.ToArray();
+        }
+
+        static byte[] ReciveMessage()
+        {
+            byte[] metaBuffer = new byte[9];
+            socket.Receive(metaBuffer, SocketFlags.None);
+
+            int headerLength = BitConverter.ToInt32(metaBuffer.Skip(1).Take(4).ToArray());
+            int messageLength = BitConverter.ToInt32(metaBuffer.Skip(5).Take(4).ToArray());
+
+            if (headerLength + messageLength == 0) 
+                return metaBuffer;
+
+            byte[] dataBuffer = new byte[headerLength + messageLength];
+            socket.Receive(dataBuffer, SocketFlags.None);
+
+            var data = new List<byte>();
+            data.AddRange(metaBuffer);
+            data.AddRange(dataBuffer);
+            return data.ToArray();
         }
     }
 }

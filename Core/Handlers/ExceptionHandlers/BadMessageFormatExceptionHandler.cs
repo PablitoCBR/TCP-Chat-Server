@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Core.Handlers.ExceptionHandlers
 {
-    class BadMessageFormatExceptionHandler : IExceptionHandler<BadMessageFormatException>
+    public class BadMessageFormatExceptionHandler : IExceptionHandler<BadMessageFormatException>
     {
         public Task HandleExceptionAsync(BadMessageFormatException exception, Socket socket, CancellationToken cancellationToken)
         {

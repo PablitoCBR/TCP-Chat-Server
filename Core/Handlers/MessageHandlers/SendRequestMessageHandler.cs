@@ -25,7 +25,7 @@ namespace Core.Handlers.MessageHandlers
             _messageFactory = messageFactory;
         }
 
-        public MessageType MessageType => MessageType.EncryptedMessage;
+        public MessageType MessageType => MessageType.MessageSendRequest;
 
         public async Task HandleAsync(IMessage message, ConcurrentDictionary<string, IClientInfo> activeClients, CancellationToken cancellationToken)
         {

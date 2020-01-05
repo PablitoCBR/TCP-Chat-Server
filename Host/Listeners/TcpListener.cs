@@ -104,7 +104,7 @@ namespace Host.Listeners
             if (_cancellationToken.IsCancellationRequested)
                 return;
 
-            Socket connectedClientSocket = ((Socket)asyncResult).EndAccept(asyncResult);
+            Socket connectedClientSocket = ((Socket)asyncResult.AsyncState).EndAccept(asyncResult);
             _logger.LogInformation("Connection accepted from: {0}", ((IPEndPoint)connectedClientSocket.RemoteEndPoint).Address.ToString());
 
             using (var scope = _serviceProvider.CreateScope())

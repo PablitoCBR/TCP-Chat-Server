@@ -54,12 +54,12 @@
         /// <summary>
         /// Message contains user credentials to perform authentication.
         /// </summary>
-        AuthenticationRequest = 0x36,
+        AuthenticationRequest = 0x37,
         
         /// <summary>
         /// Message with request of all connected users.
         /// </summary>
-        ActiveUsersUpdataRequest = 0x37,
+        ActiveUsersUpdataRequest = 0x38,
 
         // ================================ User fault error codes (101 - 200) ================================= //
 
