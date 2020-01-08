@@ -9,11 +9,18 @@ namespace ListeningClientMock
 {
     class Program
     {
-        const string Username = "MockedUser";
-        const string Password = "MockedUserPassword";
+        static string Username { get; set; }
+        static string Password { get; set; }
 
         static void Main(string[] args)
         {
+            Console.Write("Username: ");
+            Username = Console.ReadLine();
+            Console.Write("Password: ");
+            Password = Console.ReadLine();
+
+            Console.WriteLine($"Username: {Username}");
+
             IPHostEntry ipHost = Dns.GetHostEntry(Dns.GetHostName());
             IPAddress ipAddress = ipHost.AddressList[0];
 

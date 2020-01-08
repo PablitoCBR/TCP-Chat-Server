@@ -134,15 +134,13 @@ namespace Host.Listeners
                 }
                 catch (Exception ex)
                 {
-                    if (_cancellationToken.IsCancellationRequested)
-                        _logger.LogWarning("Listening caceled while receiving frame from: {0}", ((IPEndPoint)connectedClientSocket?.RemoteEndPoint)?.Address.ToString());
-                    else
+                    if(!_cancellationToken.IsCancellationRequested)
                     {
-                        _logger.LogError(ex, "Exception occured while receiving and creating frame metadata from: {0}. Check Logs for more info!",
+                        _logger.LogError(ex, "Exception occured on registration/authentication attempt from {0}. Check Logs for more info!",
                             ((IPEndPoint)connectedClientSocket?.RemoteEndPoint)?.Address.ToString());
-                    }
 
-                    await scope.ServiceProvider.GetRequiredService<IMessageDispatcher>().OnExceptionAsync(connectedClientSocket, ex, _cancellationToken);
+                        await scope.ServiceProvider.GetRequiredService<IMessageDispatcher>().OnExceptionAsync(connectedClientSocket, ex, _cancellationToken);
+                    }
                 }
             }
         }
@@ -176,11 +174,15 @@ namespace Host.Listeners
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, "Exception occured while listening for messages from {0} ({1}).", clientInfo.Name, clientInfo.RemoteEndPoint.ToString());
-                        await scope.ServiceProvider.GetRequiredService<IMessageDispatcher>().OnExceptionAsync(clientInfo, ex, _cancellationToken);
+                        if (_cancellationToken.IsCancellationRequested)
+                            _logger.LogInformation("Listening from {0} canceled.", clientInfo.Name);
+                        else await scope.ServiceProvider.GetRequiredService<IMessageDispatcher>().OnExceptionAsync(clientInfo, ex, _cancellationToken);
                     }
                 }
             }
+
+            if (clientInfo.Socket.Connected)
+                clientInfo.Socket.Disconnect(false);
 
             clientInfo.Socket.Close();
             _connectedClients.TryRemove(clientInfo.Name, out IClientInfo result);

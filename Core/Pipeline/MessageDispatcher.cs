@@ -10,6 +10,7 @@ using Core.Handlers.ExceptionHandlers.Interfaces;
 using Core.Handlers.MessageHandlers.Interfaces;
 
 using Core.Models.Enums;
+using Core.Models.Exceptions;
 using Core.Models.Interfaces;
 
 using Core.Pipeline.Interfaces;
@@ -52,16 +53,19 @@ namespace Core.Pipeline
 
         public async Task OnExceptionAsync(Socket clientSocket, Exception exception, CancellationToken cancellationToken)  
         {
-            IExceptionHandler exceptionHandler = _serviceProvider.GetService(typeof(IExceptionHandler<>).MakeGenericType(exception.GetType())) as IExceptionHandler;
-            
-            if (exceptionHandler != null)
+            if (_serviceProvider.GetService(typeof(IExceptionHandler<>).MakeGenericType(exception.GetType())) is IExceptionHandler exceptionHandler)
                 await exceptionHandler.HandleExceptionAsync(exception, clientSocket, cancellationToken);
-            else 
+            else
             {
-                Guid unhandledExceptionGuid = Guid.NewGuid();
-                _logger.LogCritical(exception, "{0} Unhandled exception occured. Message: {1}", unhandledExceptionGuid.ToString(), exception.Message);
-                byte[] errorMessage = _serviceProvider.GetRequiredService<IMessageFactory>().CreateBytes(MessageType.InternalServerError, unhandledExceptionGuid.ToString());
-                await clientSocket.SendAsync(new ArraySegment<byte>(errorMessage), SocketFlags.None, cancellationToken);
+                if (exception is AbstractException)
+                    await _serviceProvider.GetRequiredService<IExceptionHandler<AbstractException>>().HandleExceptionAsync(exception, clientSocket, cancellationToken);
+                else
+                {
+                    Guid unhandledExceptionGuid = Guid.NewGuid();
+                    _logger.LogCritical(exception, "{0} Unhandled exception occured. Message: {1}", unhandledExceptionGuid.ToString(), exception.Message);
+                    byte[] errorMessage = _serviceProvider.GetRequiredService<IMessageFactory>().CreateBytes(MessageType.InternalServerError, unhandledExceptionGuid.ToString());
+                    await clientSocket.SendAsync(new ArraySegment<byte>(errorMessage), SocketFlags.None, cancellationToken);
+                }
             }
         }
     }

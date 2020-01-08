@@ -35,6 +35,7 @@ using Core.Handlers.MessageHandlers.Interfaces;
 using Core.Handlers.MessageHandlers;
 using Core.Models.Exceptions.ServerExceptions;
 using System.Net.Sockets;
+using Core.Models.Exceptions;
 
 namespace Server
 {
@@ -91,10 +92,9 @@ namespace Server
 
         private void ConfigureExceptionHandlers(IServiceCollection services)
         {
-            services.AddTransient<IExceptionHandler<AuthenticationException>, AuthenticationExceptionHandler>();
-            services.AddTransient<IExceptionHandler<InvalidMessageException>, InvalidMessageExceptionHandler>();
+            services.AddTransient<IExceptionHandler<AbstractException>, DefaultExceptionHandler>();
+
             services.AddTransient<IExceptionHandler<ClientUnreachableException>, ClientUnreachableExceptionHandler>();
-            services.AddTransient<IExceptionHandler<BadMessageFormatException>, BadMessageFormatExceptionHandler>();
             services.AddTransient<IExceptionHandler<UnsupportedMessageTypeException>, UnsupportedMessageTypeExceptionHandler>();
             services.AddTransient<IExceptionHandler<SocketException>, SocketExceptionHandler>();
         }

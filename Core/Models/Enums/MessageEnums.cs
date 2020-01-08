@@ -29,6 +29,11 @@
         /// </summary>
         MessageSent = 0x04,
 
+        /// <summary>
+        /// Response containing coma separated names of active users.
+        /// </summary>
+        ActiveUsers = 0x05,
+
         // ================================ Message user requests codes (51 - 100) ========================================= //
 
         /// <summary>
