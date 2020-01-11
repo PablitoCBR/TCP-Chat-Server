@@ -6,7 +6,9 @@
     using System.Threading.Tasks;
 
     using Core.Handlers.ExceptionHandlers.Interfaces;
+
     using Core.Models.Exceptions;
+
     using Core.Services.Factories.Interfaces;
 
     public class DefaultExceptionHandler : IExceptionHandler<AbstractException>

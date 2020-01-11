@@ -12,7 +12,7 @@
         /// <summary>
         /// Data contains ecrypted message sent between users.
         /// </summary>
-        EncryptedMessage = 0x01,
+        Message = 0x01,
 
         /// <summary>
         /// Registration request completed successfully.
@@ -34,6 +34,16 @@
         /// </summary>
         ActiveUsers = 0x05,
 
+        /// <summary>
+        /// DH key exchange initialization message containing P and G public keys.
+        /// </summary>
+        DHKeyExchangeInit = 0x06,
+
+        /// <summary>
+        /// DH key exchange containing public key computed by second user.
+        /// </summary>
+        DHKeyExchange = 0x07,
+
         // ================================ Message user requests codes (51 - 100) ========================================= //
 
         /// <summary>
@@ -49,7 +59,7 @@
         /// <summary>
         /// Step of DH key exchange.
         /// </summary>
-        DHKeyExchangeStep = 0x35,
+        DHKeyExchangeStepRequest = 0x35,
 
         /// <summary>
         /// Message contains data required to registration.

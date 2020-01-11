@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net.Sockets;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -24,18 +25,19 @@ using DAL;
 
 using Core.Pipeline.Interfaces;
 using Core.Pipeline;
+
 using Core.Services.Factories.Interfaces;
 using Core.Services.Factories;
+
 using Core.Handlers.Security.Interfaces;
 using Core.Handlers.Security;
 using Core.Handlers.ExceptionHandlers.Interfaces;
 using Core.Handlers.ExceptionHandlers;
-using Core.Models.Exceptions.UserFaultExceptions;
 using Core.Handlers.MessageHandlers.Interfaces;
 using Core.Handlers.MessageHandlers;
-using Core.Models.Exceptions.ServerExceptions;
-using System.Net.Sockets;
+
 using Core.Models.Exceptions;
+using Core.Models.Exceptions.ServerExceptions;
 
 namespace Server
 {
@@ -62,6 +64,7 @@ namespace Server
             services.AddTransient<IMessageFactory, MessageFactory>();
 
             services.AddTransient<ISecurityService, SecurityService>();
+            services.AddSingleton<IPrimeNumberGenerator, PrimeNumberGenerator>();
 
             services.AddDbContext<ChattyDbContext>();
             services.AddTransient<IUserRepository, UserRepository>();

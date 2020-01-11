@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Core.Handlers.MessageHandlers.Interfaces;
+
 using Core.Models.Consts;
 using Core.Models.Enums;
 using Core.Models.Exceptions.ServerExceptions;
@@ -49,7 +50,7 @@ namespace Core.Handlers.MessageHandlers
                 {MessageHeaders.Sender, requestMessage.ClientInfo.Name}
             };
 
-            byte[] messageData = _messageFactory.CreateBytes(MessageType.EncryptedMessage, headers, requestMessage.MessageData);
+            byte[] messageData = _messageFactory.CreateBytes(MessageType.Message, headers, requestMessage.MessageData);
             await recipient.SendAsync(new ArraySegment<byte>(messageData), SocketFlags.None, cancellationToken);
         }
 
