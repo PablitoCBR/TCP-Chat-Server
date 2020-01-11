@@ -50,6 +50,9 @@ namespace Core.Handlers.MessageHandlers
                 {MessageHeaders.Sender, requestMessage.ClientInfo.Name}
             };
 
+            if(requestMessage.Headers.TryGetValue(MessageHeaders.Encryption, out string encryption))
+                headers.Add(MessageHeaders.Encryption, encryption)
+
             byte[] messageData = _messageFactory.CreateBytes(MessageType.Message, headers, requestMessage.MessageData);
             await recipient.SendAsync(new ArraySegment<byte>(messageData), SocketFlags.None, cancellationToken);
         }
