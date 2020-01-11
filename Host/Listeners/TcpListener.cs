@@ -33,7 +33,7 @@ namespace Host.Listeners
 
         private readonly IServiceProvider _serviceProvider;
 
-        private readonly ListennerSettings _listenerSettings;
+        private readonly ListenerSettings _listenerSettings;
 
         private readonly IPEndPoint _ipEndPoint;
 
@@ -45,7 +45,7 @@ namespace Host.Listeners
 
         private CancellationToken _cancellationToken;
 
-        public TcpListener(ListennerSettings settings, IPEndPoint ipEndPoint, ILogger<IListener> logger,
+        public TcpListener(ListenerSettings settings, IPEndPoint ipEndPoint, ILogger<IListener> logger,
             IOptions<FrameMetaDataConfiguration> frameMetaDataConfiguration, IServiceProvider serviceProvider)
         {
             ProtocolType = ProtocolType.Tcp;

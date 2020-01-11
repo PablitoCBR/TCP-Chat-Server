@@ -11,17 +11,11 @@ using Host.Builder.Models;
 using Host.Listeners;
 using Host.Listeners.Interfaces;
 
-using AutoMapper;
-
 using Core.Models;
 using Core.Services.Encoders.Interfaces;
 using Core.Services.Encoders;
 using Core.Services.Security;
 using Core.Services.Security.Interfaces;
-
-using DAL.Repositories.Interfaces;
-using DAL.Repositories;
-using DAL;
 
 using Core.Pipeline.Interfaces;
 using Core.Pipeline;
@@ -39,6 +33,10 @@ using Core.Handlers.MessageHandlers;
 using Core.Models.Exceptions;
 using Core.Models.Exceptions.ServerExceptions;
 
+using DAL;
+using DAL.Repositories;
+using DAL.Repositories.Interfaces;
+
 namespace Server
 {
     public class Startup : AbstractStartup
@@ -51,8 +49,7 @@ namespace Server
                 .CreateLogger();
 
             services.AddLogging(cfg => cfg.AddSerilog());
-            services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-
+            
             this.ConfigureOptions(services);
             this.ConfigureEncoders(services);
             this.ConfigureMessageHandlers(services);
@@ -76,6 +73,7 @@ namespace Server
         {
             services.AddOptions<SecuritySettings>().Bind(Configuration.GetSection(nameof(SecuritySettings))).ValidateDataAnnotations();
             services.AddOptions<HostBuilderSettings>().Bind(Configuration.GetSection(nameof(HostBuilderSettings))).ValidateDataAnnotations();
+            services.AddOptions<ListenerSettings>().Bind(Configuration.GetSection(nameof(ListenerSettings))).ValidateDataAnnotations();
             services.AddOptions<FrameMetaDataConfiguration>().Bind(Configuration.GetSection(nameof(FrameMetaDataConfiguration)))
                 .ValidateDataAnnotations()
                 .PostConfigure(config => config.MetaDataFieldsTotalSize = 1 + config.HeadersLengthFieldSize + config.MessageLengthFieldSize);

@@ -17,12 +17,12 @@ namespace Host.Listeners
             ServiceProvider = serviceProvider;
         }
 
-        public IListener CreateTcpListener(int port, ListennerSettings settings)
+        public IListener CreateTcpListener(int port, IOptions<ListenerSettings> settings)
         {
             IPAddress ipAddress = Dns.GetHostAddresses(Dns.GetHostName())[0];
             IPEndPoint ipEndPoint = new IPEndPoint(ipAddress, port);
             return new TcpListener(
-                settings, 
+                settings.Value, 
                 ipEndPoint,
                 this.ServiceProvider.GetService<ILogger<IListener>>(), 
                 this.ServiceProvider.GetService<IOptions<FrameMetaDataConfiguration>>(),

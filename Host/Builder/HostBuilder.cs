@@ -1,13 +1,14 @@
-﻿using AutoMapper;
+﻿using System;
+
 using Host.Abstractions;
 using Host.Builder.Interfaces;
 using Host.Builder.Models;
 using Host.Listeners;
 using Host.Listeners.Interfaces;
+
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.DependencyInjection;
-using System;
 
 namespace Host.Builder
 {
@@ -21,21 +22,18 @@ namespace Host.Builder
 
         private readonly HostBuilderSettings _builderSettings;
 
-        private readonly IMapper _mapper;
-
         public HostBuilder(ILogger<IHostBuilder> logger, IOptions<HostBuilderSettings> builderSettings, IListenerFabric listenerFabric, 
-            IServiceProvider serviceProvider, IMapper mapper)
+            IServiceProvider serviceProvider)
         {
             this._logger = logger;
             this._builderSettings = builderSettings.Value;
             this._listenerFabric = listenerFabric;
             this._serviceProvider = serviceProvider;
-            this._mapper = mapper;
         }
 
         public IHost Build()
         {
-            IListener tcpListener = this._listenerFabric.CreateTcpListener(this._builderSettings.Port, this._mapper.Map<ListennerSettings>(this._builderSettings));
+            IListener tcpListener = this._listenerFabric.CreateTcpListener(this._builderSettings.Port, _serviceProvider.GetRequiredService<IOptions<ListenerSettings>>());
             return new Host(tcpListener, this._serviceProvider.GetService<ILogger<IHost>>());
         }
     }
