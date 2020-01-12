@@ -53,6 +53,9 @@ namespace Core.Handlers.MessageHandlers
             if (requestMessage.Headers.TryGetValue(MessageHeaders.Encryption, out string encryption))
                 headers.Add(MessageHeaders.Encryption, encryption);
 
+            if (requestMessage.Headers.TryGetValue(MessageHeaders.MessageGuid, out string guid))
+                headers.Add(MessageHeaders.MessageGuid, guid);
+
             byte[] messageData = _messageFactory.CreateBytes(MessageType.Message, headers, requestMessage.MessageData);
             await recipient.SendAsync(new ArraySegment<byte>(messageData), SocketFlags.None, cancellationToken);
         }
