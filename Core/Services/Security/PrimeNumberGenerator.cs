@@ -12,12 +12,12 @@
 
         public PrimeNumberGenerator()
         {
-            _primeNumbers = GeneratePrimeNumbers(minValue: 1000000000);
+            _primeNumbers = GeneratePrimeNumbers(minValue: 100);
         }
 
         public int GetRandomPrimeNumber() => _primeNumbers[new Random().Next(_primeNumbers.Length)];
 
-        private int[] GeneratePrimeNumbers(int minValue = 0, int maxValue = Int32.MaxValue)
+        private int[] GeneratePrimeNumbers(int minValue = 0, int maxValue = 100000)
         {
             IList<int> primes = new List<int> { 2 };
             int nextPrimeNumber = 3;
