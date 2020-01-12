@@ -84,6 +84,13 @@ namespace Host.Listeners
 
             try
             {
+                foreach(var pair in _connectedClients)
+                {
+                    _connectedClients.TryRemove(pair.Key, out IClientInfo clientInfo);
+                    clientInfo.Socket.Disconnect(false);
+                    clientInfo.Socket.Dispose();
+                }
+
                 listener.Shutdown(SocketShutdown.Both);
                 listener.Close();
             }
