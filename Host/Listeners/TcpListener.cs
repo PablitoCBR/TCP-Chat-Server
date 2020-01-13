@@ -87,8 +87,8 @@ namespace Host.Listeners
                 foreach(var pair in _connectedClients)
                 {
                     _connectedClients.TryRemove(pair.Key, out IClientInfo clientInfo);
-                    clientInfo.Socket.Disconnect(false);
-                    clientInfo.Socket.Dispose();
+                    clientInfo?.Socket.Disconnect(false);
+                    clientInfo?.Socket.Dispose();
                 }
 
                 listener.Shutdown(SocketShutdown.Both);
@@ -201,6 +201,9 @@ namespace Host.Listeners
         {
             if (_cancellationToken.IsCancellationRequested)
                 return await Task.FromCanceled<byte[]>(_cancellationToken);
+
+            if (dataLength <= 0)
+                return new byte[0];
 
             ArraySegment<byte> buffer = new ArraySegment<byte>(new byte[dataLength]);
             try
