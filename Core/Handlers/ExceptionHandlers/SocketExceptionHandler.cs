@@ -25,8 +25,7 @@ namespace Core.Handlers.ExceptionHandlers
 
             if (socketException.SocketErrorCode.Equals(SocketError.ConnectionReset))
                 _logger.LogWarning(socketException.Message);
-            // socket exception status code trzeba je ogarnac :(
-
+            
             socket.Disconnect(false);
             return Task.CompletedTask;
         }

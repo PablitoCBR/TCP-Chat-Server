@@ -6,7 +6,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 
 using Host.Builder;
-using Host.Builder.Interfaces;
 using Host.Builder.Models;
 using Host.Listeners;
 using Host.Listeners.Interfaces;

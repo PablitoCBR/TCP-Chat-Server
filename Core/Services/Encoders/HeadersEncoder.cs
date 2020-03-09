@@ -31,7 +31,7 @@ namespace Core.Services.Encoders
         public byte[] Encode(IDictionary<string, string> headers)
         {
             if (headers.Count == 0)
-                return new byte[0];
+                return Array.Empty<byte>();
 
             StringBuilder stringBuilder = new StringBuilder();
             foreach (KeyValuePair<string, string> header in headers)

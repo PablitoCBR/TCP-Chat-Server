@@ -1,4 +1,4 @@
-﻿using Host.Builder.Interfaces;
+﻿using Host.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 

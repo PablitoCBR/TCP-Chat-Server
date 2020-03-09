@@ -1,5 +1,5 @@
-﻿using Host.Abstractions;
-using Host.Builder.Interfaces;
+﻿using Host;
+using Host.Builder;
 using System;
 
 namespace Server
@@ -20,7 +20,7 @@ namespace Server
                 Console.WriteLine("Enter command:");
                 command = Console.ReadLine().Trim();
 
-                switch (command)
+                switch (command.ToLower())
                 {
                     case "run":
                         host.Run();

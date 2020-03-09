@@ -90,9 +90,6 @@ namespace Host.Listeners
                     clientInfo?.Socket.Disconnect(false);
                     clientInfo?.Socket.Dispose();
                 }
-
-                listener.Shutdown(SocketShutdown.Both);
-                listener.Close();
             }
             catch (SocketException)
             {
@@ -100,6 +97,8 @@ namespace Host.Listeners
             }
             finally
             {
+                listener.Shutdown(SocketShutdown.Both);
+                listener.Close();
                 IsListening = false;
             }
         }
@@ -203,7 +202,7 @@ namespace Host.Listeners
                 return await Task.FromCanceled<byte[]>(_cancellationToken);
 
             if (dataLength <= 0)
-                return new byte[0];
+                return Array.Empty<byte>();
 
             ArraySegment<byte> buffer = new ArraySegment<byte>(new byte[dataLength]);
             try

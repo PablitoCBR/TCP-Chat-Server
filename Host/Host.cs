@@ -1,5 +1,4 @@
-﻿using Host.Abstractions;
-using Host.Listeners.Interfaces;
+﻿using Host.Listeners.Interfaces;
 using Microsoft.Extensions.Logging;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,13 +13,12 @@ namespace Host
 
         private CancellationTokenSource _cancellationTokenSource;
 
-        public bool IsActive { get; private set; }
+        public bool IsActive => _tcpListener != null && _tcpListener.IsListening;
 
         public Host(IListener listener, ILogger<IHost> logger)
         {
             _tcpListener = listener;
             _logger = logger;
-            IsActive = false;
         }
 
         public void Run()
@@ -37,8 +35,6 @@ namespace Host
                 Task.Factory.StartNew(
                     () => _tcpListener.Listen(_cancellationTokenSource.Token),
                     _cancellationTokenSource.Token);
-
-                IsActive = true;
             }
         }
 
@@ -47,7 +43,7 @@ namespace Host
             _logger.LogInformation("Restarting listener.");
             this.Stop();
             this.Run();
-            _logger.LogInformation("Listener restrted.");
+            _logger.LogInformation("Listener restarted.");
         }
 
         public void Stop()
@@ -61,10 +57,16 @@ namespace Host
                 _logger.LogInformation("Stoping listener.");
 
                 _cancellationTokenSource.Cancel();
-                IsActive = false;
-
                 _logger.LogInformation("Listening stopped.");
             }
         }
+    }
+
+    public interface IHost
+    {
+        bool IsActive { get; }
+        void Run();
+        void Reset();
+        void Stop();
     }
 }

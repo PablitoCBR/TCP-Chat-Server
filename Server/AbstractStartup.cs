@@ -9,7 +9,7 @@ namespace Server
     {
         public IConfiguration Configuration { get; }
 
-        public AbstractStartup()
+        protected AbstractStartup()
         {
             ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
             Configuration = configurationBuilder
