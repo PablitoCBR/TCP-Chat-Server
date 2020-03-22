@@ -25,7 +25,6 @@ namespace Core.Pipeline
     public class MessageDispatcher : IMessageDispatcher
     {
         private readonly IServiceProvider _serviceProvider;
-
         private readonly ILogger<IMessageDispatcher> _logger;
 
         public MessageDispatcher(IServiceProvider serviceProvider, ILogger<IMessageDispatcher> logger)

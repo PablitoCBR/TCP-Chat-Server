@@ -10,10 +10,10 @@
 
     public interface IMessageDispatcher
     {
-        Task DispatchAsync(IMessage message, ConcurrentDictionary<string, IClientInfo> connectedClients, CancellationToken cancellationToken);
+        Task DispatchAsync(IMessage message, ConcurrentDictionary<string, IClientInfo> connectedClients, CancellationToken cancellationToken = default);
 
-        Task OnExceptionAsync(IClientInfo clientInfo, Exception exception, CancellationToken cancellationToken);
+        Task OnExceptionAsync(IClientInfo clientInfo, Exception exception, CancellationToken cancellationToken = default);
 
-        Task OnExceptionAsync(Socket clientSocket, Exception exception, CancellationToken cancellationToken);
+        Task OnExceptionAsync(Socket clientSocket, Exception exception, CancellationToken cancellationToken = default);
     }
 }

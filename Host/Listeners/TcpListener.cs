@@ -75,29 +75,30 @@ namespace Host.Listeners
 
             IsListening = true;
 
-            while (!_cancellationToken.IsCancellationRequested)
-            {
-                _acceptEvent.Reset();
-                listener.BeginAccept(new AsyncCallback(HandleConnectionAttemptAsync), listener);
-                _acceptEvent.WaitOne();
-            }
-
             try
             {
-                foreach(var pair in _connectedClients)
+                _cancellationToken.Register(() => _acceptEvent.Set());
+
+                while (!_cancellationToken.IsCancellationRequested)
+                {
+                    _acceptEvent.Reset();
+                    listener.BeginAccept(new AsyncCallback(HandleConnectionAttemptAsync), listener);
+                    _acceptEvent.WaitOne();
+                }
+            }
+            catch (TaskCanceledException)
+            {
+                _logger.LogInformation("TCP Listener was closed.");
+
+                foreach (var pair in _connectedClients)
                 {
                     _connectedClients.TryRemove(pair.Key, out IClientInfo clientInfo);
                     clientInfo?.Socket.Disconnect(false);
                     clientInfo?.Socket.Dispose();
                 }
             }
-            catch (SocketException)
-            {
-                _logger.LogInformation("TCP Listener was closed.");
-            }
             finally
             {
-                listener.Shutdown(SocketShutdown.Both);
                 listener.Close();
                 IsListening = false;
             }
@@ -135,7 +136,7 @@ namespace Host.Listeners
                     {
                         IClientInfo client = await authenticationHandler.Authenticate(message, _cancellationToken).ConfigureAwait(false);
                         this.RegisterConnectedUser(client);
-                        this.ListenForMessagesAsync(client);
+                        Task.Factory.StartNew(() => ListenForMessagesAsync(client), TaskCreationOptions.AttachedToParent).Unwrap();
                     }
                 }
                 catch (Exception ex)
@@ -162,7 +163,7 @@ namespace Host.Listeners
             }
         }
 
-        private async void ListenForMessagesAsync(IClientInfo clientInfo)
+        private async Task ListenForMessagesAsync(IClientInfo clientInfo)
         {
             using (var scope = _serviceProvider.CreateScope())
             {
@@ -193,13 +194,13 @@ namespace Host.Listeners
             clientInfo.Socket.Close();
             _connectedClients.TryRemove(clientInfo.Name, out IClientInfo result);
             _logger.LogInformation($"User: {result.Name} DISCONNECTED.");
+            _cancellationToken.ThrowIfCancellationRequested();
         }
 
 
         private async Task<byte[]> ReceiveDataAsync(Socket clientSocket, int dataLength)
         {
-            if (_cancellationToken.IsCancellationRequested)
-                return await Task.FromCanceled<byte[]>(_cancellationToken);
+            _cancellationToken.ThrowIfCancellationRequested();
 
             if (dataLength <= 0)
                 return Array.Empty<byte>();

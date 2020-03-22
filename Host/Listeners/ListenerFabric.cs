@@ -19,7 +19,11 @@ namespace Host.Listeners
 
         public IListener CreateTcpListener(int port, IOptions<ListenerSettings> settings)
         {
+#if DEBUG
+            IPAddress ipAddress = Dns.GetHostAddresses(Dns.GetHostName())[0];
+#else
             IPAddress ipAddress = Dns.GetHostAddresses(Dns.GetHostName())[3];
+#endif
             IPEndPoint ipEndPoint = new IPEndPoint(ipAddress, port);
             return new TcpListener(
                 settings.Value, 

@@ -30,7 +30,7 @@ namespace Core.Services.Encoders
 
         public byte[] Encode(IDictionary<string, string> headers)
         {
-            if (headers.Count == 0)
+            if (headers == null || headers.Count == 0)
                 return Array.Empty<byte>();
 
             StringBuilder stringBuilder = new StringBuilder();
