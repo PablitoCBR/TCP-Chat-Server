@@ -10,7 +10,6 @@ namespace Server
         {
             TStartup startup = Activator.CreateInstance<TStartup>();
             IServiceProvider serviceProvider = startup.ConfigureServices(new ServiceCollection());
-
             IHostBuilder hostBuilder = serviceProvider.GetService<IHostBuilder>();
             return hostBuilder;
         }

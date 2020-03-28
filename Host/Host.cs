@@ -38,14 +38,6 @@ namespace Host
             }
         }
 
-        public void Reset()
-        {
-            _logger.LogInformation("Restarting listener.");
-            this.Stop();
-            this.Run();
-            _logger.LogInformation("Listener restarted.");
-        }
-
         public void Stop()
         {
             if (IsActive == false)
@@ -66,7 +58,6 @@ namespace Host
     {
         bool IsActive { get; }
         void Run();
-        void Reset();
         void Stop();
     }
 }

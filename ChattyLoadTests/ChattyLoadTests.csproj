@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
@@ -14,15 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Host\Host.csproj" />
-    <ProjectReference Include="..\Server\Server.csproj" />
-    <ProjectReference Include="..\Utils\Utils.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="appsettings.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    <ProjectReference Include="..\ChattyAcceptaceTests\ChattyAcceptaceTests.csproj" />
   </ItemGroup>
 
 </Project>

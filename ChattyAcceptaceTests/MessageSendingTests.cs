@@ -32,7 +32,7 @@ namespace ChattyAcceptaceTests
         }
 
         [Fact]
-        public async Task ReciveingMessageTest()
+        public async Task RecivingMessageTest()
         {
             Socket senderSocket = getAuthenticatedUserSocket("senderX", "sender");
             Socket recipientSocket = getAuthenticatedUserSocket("recipientX", "recipient");

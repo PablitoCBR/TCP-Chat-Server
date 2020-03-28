@@ -17,16 +17,13 @@ namespace Server
             string command;
             do
             {
-                Console.WriteLine("Enter command:");
+                Console.WriteLine("Enter command: [run/stop/exit]");
                 command = Console.ReadLine().Trim();
 
                 switch (command.ToLower())
                 {
                     case "run":
                         host.Run();
-                        break;
-                    case "restart":
-                        host.Reset();
                         break;
                     case "stop":
                         host.Stop();
