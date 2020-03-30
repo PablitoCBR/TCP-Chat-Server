@@ -34,8 +34,7 @@ namespace Core.Handlers.MessageHandlers
 
         public async Task HandleAsync(IMessage message, ConcurrentDictionary<string, IClientInfo> activeClients, CancellationToken cancellationToken)
         {
-            if (cancellationToken.IsCancellationRequested)
-                return;
+            cancellationToken.ThrowIfCancellationRequested();
 
             if (!message.Headers.TryGetValue(MessageHeaders.Recipient, out string recipientName))
                 throw new BadMessageFormatException(MessageType.MissingHeader, $"{MessageHeaders.Recipient} header was missing.");
@@ -56,8 +55,10 @@ namespace Core.Handlers.MessageHandlers
 
             byte[] messageResponse = _messageFactory.CreateBytes(MessageType.DHKeyExchangeInit, messageHeaders);
 
-            await recipient.Socket.SendAsync(new ArraySegment<byte>(messageResponse), SocketFlags.None, cancellationToken);
-            await message.ClientInfo.Socket.SendAsync(new ArraySegment<byte>(messageResponse), SocketFlags.None, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            Task recipientSendingTask = recipient.Socket.SendAsync(new ArraySegment<byte>(messageResponse), SocketFlags.None);
+            Task senderSendingTask = message.ClientInfo.Socket.SendAsync(new ArraySegment<byte>(messageResponse), SocketFlags.None);
+            await Task.WhenAll(recipientSendingTask, senderSendingTask);
         }
     }
 }

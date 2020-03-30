@@ -30,7 +30,7 @@ namespace Core.Handlers.MessageHandlers
 
         public async Task HandleAsync(IMessage message, ConcurrentDictionary<string, IClientInfo> activeClients, CancellationToken cancellationToken)
         {
-            if (cancellationToken.IsCancellationRequested) return;
+            cancellationToken.ThrowIfCancellationRequested();
 
             if (!message.Headers.TryGetValue(MessageHeaders.Recipient, out string recipientName))
                 throw new BadMessageFormatException(MessageType.MissingHeader, $"{MessageHeaders.Recipient} header was missing.");

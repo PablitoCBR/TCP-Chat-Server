@@ -3,6 +3,7 @@ using Core.Models.Consts;
 using Core.Models.Enums;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Sockets;
 using System.Threading;
@@ -101,12 +102,12 @@ namespace ChattyLoadTests
                 authenticationResult = TryAuthenticateUser(recipientSocket, recipient.ToString(), "password");
                 Assert.True(authenticationResult);
 
-                return new Task(async () =>
+                return new Task(() =>
                {
                    Task<bool> reciveTask = Task.Run(() => TryReciveMessage(recipientSocket, out byte[] message));
                    bool sendingResult = TrySendMessage(senderSocket, sender.ToString(), recipient.ToString());
                    Assert.True(sendingResult);
-                   Assert.True(await reciveTask);
+                   Assert.True(reciveTask.Result);
                });
             }).ToList();
 

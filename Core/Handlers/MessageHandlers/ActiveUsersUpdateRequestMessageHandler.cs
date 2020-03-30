@@ -27,9 +27,7 @@ namespace Core.Handlers.MessageHandlers
 
         public async Task HandleAsync(IMessage message, ConcurrentDictionary<string, IClientInfo> activeClients, CancellationToken cancellationToken)
         {
-            if (cancellationToken.IsCancellationRequested)
-                return;
-
+            cancellationToken.ThrowIfCancellationRequested();
             byte[] response = _messageFactory.CreateBytes(MessageType.ActiveUsers, String.Join(',', activeClients.Keys.ToArray()));
             await message.ClientInfo.Socket.SendAsync(new ArraySegment<byte>(response), SocketFlags.None, cancellationToken);
         }
