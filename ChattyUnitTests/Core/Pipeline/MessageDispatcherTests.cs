@@ -1,7 +1,7 @@
 ﻿using Core.Handlers.ExceptionHandlers.Interfaces;
 using Core.Handlers.MessageHandlers.Interfaces;
+using Core.Models;
 using Core.Models.Enums;
-using Core.Models.Interfaces;
 using Core.Pipeline;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -22,43 +22,34 @@ namespace ChattyUnitTests.Core.Pipeline
         private readonly Mock<IMessageHandler> _messageHandlerMock;
         private readonly Mock<IExceptionHandler<MockedException>> _exceptionHandlerMock;
 
-        private readonly Mock<IMessage> _messageMock;
-        private readonly Mock<IFrameMetaData> _frameMetaDataMock;
-        private readonly Mock<IClientInfo> _clientInfoMock;
-
         public MessageDispatcherTests()
         {
             _messageHandlerMock = new Mock<IMessageHandler>();
             _exceptionHandlerMock = new Mock<IExceptionHandler<MockedException>>();
-            _frameMetaDataMock = new Mock<IFrameMetaData>();
-            _clientInfoMock = new Mock<IClientInfo>();
-            _messageMock = new Mock<IMessage>();
-            _messageMock.SetupGet(mock => mock.FrameMetaData).Returns(_frameMetaDataMock.Object);
-            _messageMock.SetupGet(mock => mock.ClientInfo).Returns(_clientInfoMock.Object);
 
             var serviceDescriptors = new ServiceCollection();
             serviceDescriptors.AddTransient(x => _messageHandlerMock.Object);
             serviceDescriptors.AddTransient(x => _exceptionHandlerMock.Object);
 
-            _messageDispatcher = new MessageDispatcher(serviceDescriptors.BuildServiceProvider(), Mock.Of<ILogger<IMessageDispatcher>>());
+            _messageDispatcher = new MessageDispatcher(serviceDescriptors.BuildServiceProvider(), Mock.Of<ILogger<MessageDispatcher>>());
         }
 
         [Fact]
         public async Task DispatchMessageTest()
         {
             // Arrange
-            _frameMetaDataMock.SetupGet(mock => mock.Type).Returns(MessageType.MessageSendRequest);
-            _messageHandlerMock.SetupGet(mock => mock.MessageType).Returns(_frameMetaDataMock.Object.Type);
+            var message = new Message(null, new FrameMetaData(MessageType.MessageSendRequest, 0, 0), null, Array.Empty<byte>());
+            _messageHandlerMock.SetupGet(mock => mock.MessageType).Returns(message.FrameMetaData.Type);
             _messageHandlerMock.Setup(
-                mock => mock.HandleAsync(_messageMock.Object, It.IsAny<ConcurrentDictionary<string, IClientInfo>>(), It.IsAny<CancellationToken>())
+                mock => mock.HandleAsync(message, It.IsAny<ConcurrentDictionary<string, ClientInfo>>(), It.IsAny<CancellationToken>())
                 ).Returns(Task.CompletedTask);
 
             // Act
-            await _messageDispatcher.DispatchAsync(_messageMock.Object, new ConcurrentDictionary<string, IClientInfo>());
+            await _messageDispatcher.DispatchAsync(message, new ConcurrentDictionary<string, ClientInfo>());
 
             // Assert
             _messageHandlerMock.Verify(
-                mock => mock.HandleAsync(_messageMock.Object, It.IsAny<ConcurrentDictionary<string, IClientInfo>>(), It.IsAny<CancellationToken>()), 
+                mock => mock.HandleAsync(message, It.IsAny<ConcurrentDictionary<string, ClientInfo>>(), It.IsAny<CancellationToken>()), 
                 Times.Once);
         }
 
@@ -67,15 +58,16 @@ namespace ChattyUnitTests.Core.Pipeline
         {
             // Arrange
             var socket = new Socket(SocketType.Stream, ProtocolType.Unspecified);
-            _clientInfoMock.SetupGet(mock => mock.Socket).Returns(socket);
-            _frameMetaDataMock.SetupGet(mock => mock.Type).Returns(MessageType.MessageSendRequest);
-            _messageHandlerMock.SetupGet(mock => mock.MessageType).Returns(_frameMetaDataMock.Object.Type);
+            var clientInfo = ClientInfo.Create(1, "test", socket);
+            var frameMeta = new FrameMetaData(MessageType.MessageSendRequest, 0, 0);
+            var message = new Message(clientInfo, frameMeta, null, Array.Empty<byte>());
+            _messageHandlerMock.SetupGet(mock => mock.MessageType).Returns(frameMeta.Type);
             _messageHandlerMock.Setup(
-                mock => mock.HandleAsync(_messageMock.Object, It.IsAny<ConcurrentDictionary<string, IClientInfo>>(), It.IsAny<CancellationToken>())
-                ).Throws<MockedException>();
+                mock => mock.HandleAsync(message, It.IsAny<ConcurrentDictionary<string, ClientInfo>>(), It.IsAny<CancellationToken>()))
+                    .Throws<MockedException>();
 
             // Act
-            await _messageDispatcher.DispatchAsync(_messageMock.Object, new ConcurrentDictionary<string, IClientInfo>());
+            await _messageDispatcher.DispatchAsync(message, new ConcurrentDictionary<string, ClientInfo>());
 
             // Assert
             _exceptionHandlerMock.Verify(
@@ -88,10 +80,10 @@ namespace ChattyUnitTests.Core.Pipeline
         {
             // Arrange
             var socket = new Socket(SocketType.Stream, ProtocolType.Unspecified);
-            _clientInfoMock.SetupGet(mock => mock.Socket).Returns(socket);
+            var clientInfo = ClientInfo.Create(1, "test", socket);
 
             // Act
-            await _messageDispatcher.OnExceptionAsync(_clientInfoMock.Object, new MockedException());
+            await _messageDispatcher.OnExceptionAsync(clientInfo, new MockedException());
 
             // Assert
             _exceptionHandlerMock.Verify(

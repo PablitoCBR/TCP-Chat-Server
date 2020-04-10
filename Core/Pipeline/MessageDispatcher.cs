@@ -1,8 +1,8 @@
 ﻿using Core.Handlers.ExceptionHandlers.Interfaces;
 using Core.Handlers.MessageHandlers.Interfaces;
+using Core.Models;
 using Core.Models.Enums;
 using Core.Models.Exceptions;
-using Core.Models.Interfaces;
 using Core.Services.Factories;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -19,15 +19,15 @@ namespace Core.Pipeline
     public class MessageDispatcher : IMessageDispatcher
     {
         private readonly IServiceProvider _serviceProvider;
-        private readonly ILogger<IMessageDispatcher> _logger;
+        private readonly ILogger<MessageDispatcher> _logger;
 
-        public MessageDispatcher(IServiceProvider serviceProvider, ILogger<IMessageDispatcher> logger)
+        public MessageDispatcher(IServiceProvider serviceProvider, ILogger<MessageDispatcher> logger)
         {
             _serviceProvider = serviceProvider;
             _logger = logger;
         }
 
-        public async Task DispatchAsync(IMessage message, ConcurrentDictionary<string, IClientInfo> connectedClients, CancellationToken cancellationToken)
+        public async Task DispatchAsync(Message message, ConcurrentDictionary<string, ClientInfo> connectedClients, CancellationToken cancellationToken)
         {
             try
             {
@@ -40,7 +40,7 @@ namespace Core.Pipeline
             }
         }
 
-        public async Task OnExceptionAsync(IClientInfo clientInfo, Exception exception, CancellationToken cancellationToken) 
+        public async Task OnExceptionAsync(ClientInfo clientInfo, Exception exception, CancellationToken cancellationToken) 
            => await this.OnExceptionAsync(clientInfo.Socket, exception, cancellationToken);
 
 
@@ -65,9 +65,9 @@ namespace Core.Pipeline
 
     public interface IMessageDispatcher
     {
-        Task DispatchAsync(IMessage message, ConcurrentDictionary<string, IClientInfo> connectedClients, CancellationToken cancellationToken = default);
+        Task DispatchAsync(Message message, ConcurrentDictionary<string, ClientInfo> connectedClients, CancellationToken cancellationToken = default);
 
-        Task OnExceptionAsync(IClientInfo clientInfo, Exception exception, CancellationToken cancellationToken = default);
+        Task OnExceptionAsync(ClientInfo clientInfo, Exception exception, CancellationToken cancellationToken = default);
 
         Task OnExceptionAsync(Socket clientSocket, Exception exception, CancellationToken cancellationToken = default);
     }

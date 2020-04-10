@@ -1,6 +1,5 @@
 ﻿using Core.Models;
 using Core.Models.Enums;
-using Core.Models.Interfaces;
 using Core.Services.Encoders;
 using System.Collections.Generic;
 using System.Text;
@@ -19,32 +18,32 @@ namespace Core.Services.Factories
             _messageEncoder = messageEncoder;
         }
 
-        public IMessage Create(IClientInfo clientInfo, MessageType messageType, IDictionary<string, string> headers, string message = "")
+        public Message Create(ClientInfo clientInfo, MessageType messageType, IDictionary<string, string> headers, string message = "")
         {
             byte[] messageData = Encoding.ASCII.GetBytes(message);
             return this.Create(clientInfo, messageType, headers, messageData);
         }
 
-        public IMessage Create(IClientInfo clientInfo, MessageType messageType, IDictionary<string, string> headers, byte[] messageData)
+        public Message Create(ClientInfo clientInfo, MessageType messageType, IDictionary<string, string> headers, byte[] messageData)
         {
             byte[] headersData = _headersEncoder.Encode(headers);
-            IFrameMetaData frameMetaData = new FrameMetaData(messageType, headersData.Length, messageData.Length);
+            FrameMetaData frameMetaData = new FrameMetaData(messageType, headersData.Length, messageData.Length);
             return new Message(clientInfo, frameMetaData, headers, messageData);
         }
 
         public byte[] CreateBytes(MessageType messageType, IDictionary<string, string> headers, string message = "")
         {
-            IMessage messageInstance = this.Create(null, messageType, headers, message);
+            Message messageInstance = this.Create(null, messageType, headers, message);
             return this.CreateBytes(messageInstance);
         }
 
         public byte[] CreateBytes(MessageType messageType, IDictionary<string, string> headers, byte[] messageData)
         {
-            IMessage message = this.Create(null, messageType, headers, messageData ?? new byte[0]);
+            Message message = this.Create(null, messageType, headers, messageData ?? new byte[0]);
             return this.CreateBytes(message);
         }
 
-        public byte[] CreateBytes(IMessage message) 
+        public byte[] CreateBytes(Message message) 
             => _messageEncoder.Encode(message);
 
         public byte[] CreateBytes(MessageType messageType)
@@ -56,9 +55,9 @@ namespace Core.Services.Factories
 
     public interface IMessageFactory
     {
-        IMessage Create(IClientInfo clientInfo, MessageType messageType, IDictionary<string, string> headers, string message = "");
+        Message Create(ClientInfo clientInfo, MessageType messageType, IDictionary<string, string> headers, string message = "");
 
-        IMessage Create(IClientInfo clientInfo, MessageType messageType, IDictionary<string, string> headers, byte[] messageData);
+        Message Create(ClientInfo clientInfo, MessageType messageType, IDictionary<string, string> headers, byte[] messageData);
 
         byte[] CreateBytes(MessageType messageType);
 
@@ -68,6 +67,6 @@ namespace Core.Services.Factories
 
         byte[] CreateBytes(MessageType messageType, IDictionary<string, string> headers, byte[] messageData);
 
-        byte[] CreateBytes(IMessage message);
+        byte[] CreateBytes(Message message);
     }
 }

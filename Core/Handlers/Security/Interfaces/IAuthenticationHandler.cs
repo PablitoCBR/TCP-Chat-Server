@@ -1,14 +1,13 @@
 ﻿namespace Core.Handlers.Security.Interfaces
 {
+    using Core.Models;
     using System.Threading;
     using System.Threading.Tasks;
 
-    using Core.Models.Interfaces;
-
     public interface IAuthenticationHandler
     {
-        Task RegisterAsync(IMessage message, CancellationToken cancellationToken);
+        Task RegisterAsync(Message message, CancellationToken cancellationToken);
 
-        Task<IClientInfo> Authenticate(IMessage message, CancellationToken cancellationToken);
+        Task<ClientInfo> Authenticate(Message message, CancellationToken cancellationToken);
     }
 }

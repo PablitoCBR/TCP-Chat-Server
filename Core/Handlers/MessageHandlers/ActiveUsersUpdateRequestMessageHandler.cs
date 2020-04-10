@@ -1,6 +1,6 @@
 ﻿using Core.Handlers.MessageHandlers.Interfaces;
+using Core.Models;
 using Core.Models.Enums;
-using Core.Models.Interfaces;
 using Core.Services.Factories;
 using System;
 using System.Collections.Concurrent;
@@ -22,7 +22,7 @@ namespace Core.Handlers.MessageHandlers
 
         public MessageType MessageType => MessageType.ActiveUsersUpdataRequest;
 
-        public async Task HandleAsync(IMessage message, ConcurrentDictionary<string, IClientInfo> activeClients, CancellationToken cancellationToken)
+        public async Task HandleAsync(Message message, ConcurrentDictionary<string, ClientInfo> activeClients, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
             byte[] response = _messageFactory.CreateBytes(MessageType.ActiveUsers, String.Join(',', activeClients.Keys.ToArray()));

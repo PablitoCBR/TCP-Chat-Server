@@ -1,7 +1,6 @@
 ﻿using Core.Models;
 using Core.Models.Consts;
 using Core.Models.Enums;
-using Core.Models.Interfaces;
 using Core.Services.Encoders;
 using Microsoft.Extensions.Options;
 using System;
@@ -40,7 +39,7 @@ namespace ChattyFunctionalTests
         public void EncodeDiffrentMessageTypesTest(MessageType messageType)
         {
             // Arrange
-            IMessage message = new Message(null, new FrameMetaData(messageType, 0, 0), null, Array.Empty<byte>());
+            Message message = new Message(null, new FrameMetaData(messageType, 0, 0), null, Array.Empty<byte>());
 
             // Act
             byte[] result = _messageEncoder.Encode(message);
@@ -83,7 +82,7 @@ namespace ChattyFunctionalTests
             var frameMetaData = new FrameMetaData(MessageType.MessageSendRequest, headersExpectedBytes.Length, messageData.Count());
 
             // Act
-            IMessage result = _messageEncoder.Decode(messageBytes.ToArray(), frameMetaData, null);
+            Message result = _messageEncoder.Decode(messageBytes.ToArray(), frameMetaData, null);
 
             // Assert
             Assert.Equal(frameMetaData.Type, result.FrameMetaData.Type);

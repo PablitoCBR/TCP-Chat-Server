@@ -1,7 +1,6 @@
 ﻿using Core.Models;
 using Core.Models.Enums;
 using Core.Models.Exceptions.ServerExceptions;
-using Core.Models.Interfaces;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
@@ -18,14 +17,14 @@ namespace Core.Services.Encoders
             this._configuration = options.Value;
         }
 
-        public IFrameMetaData Decode(byte[] frameMetaData)
+        public FrameMetaData Decode(byte[] frameMetaData)
             => new FrameMetaData(
                 this.GetMessageType(frameMetaData),
                 this.GetHeadersDataLength(frameMetaData),
                 this.GetMessageDataLength(frameMetaData)
                 );
 
-        public byte[] Encode(IFrameMetaData frameMetaData)
+        public byte[] Encode(FrameMetaData frameMetaData)
         {
             List<byte> encodedMetaData = new List<byte>() { (byte)frameMetaData.Type };
             encodedMetaData.AddRange(BitConverter.GetBytes(frameMetaData.HeadersDataLength));
@@ -57,9 +56,9 @@ namespace Core.Services.Encoders
 
     public interface IFrameMetaEncoder
     {
-        IFrameMetaData Decode(byte[] frameMetaData);
+        FrameMetaData Decode(byte[] frameMetaData);
 
-        byte[] Encode(IFrameMetaData frameMetaData);
+        byte[] Encode(FrameMetaData frameMetaData);
 
         MessageType GetMessageType(byte[] frameMetaData);
 

@@ -1,7 +1,6 @@
 ﻿using Core.Models;
 using Core.Models.Consts;
 using Core.Models.Enums;
-using Core.Models.Interfaces;
 using Core.Services.Encoders;
 using Moq;
 using System;
@@ -20,8 +19,8 @@ namespace ChattyUnitTests.Core.Encoders
         private readonly Mock<IHeadersEncoder> _headersEncoderMock;
         private readonly Mock<IFrameMetaEncoder> _frameMetaEncoderMock;
 
-        private readonly IMessage _message;
-        private readonly IFrameMetaData _frameMetaData;
+        private readonly Message _message;
+        private readonly FrameMetaData _frameMetaData;
         private readonly byte[] _messageData;
 
         private int _frameMetaDataLength = 9;
@@ -66,7 +65,7 @@ namespace ChattyUnitTests.Core.Encoders
                 .Returns(_message.Headers);
 
             //Act
-            IMessage result = _messageEncoder.Decode(_messageData.Skip(_frameMetaDataLength).ToArray(), _frameMetaData, null);
+            Message result = _messageEncoder.Decode(_messageData.Skip(_frameMetaDataLength).ToArray(), _frameMetaData, null);
 
             //Assert
             Assert.NotNull(result);

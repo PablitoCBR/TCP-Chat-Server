@@ -1,9 +1,9 @@
 ﻿using Core.Handlers.MessageHandlers.Interfaces;
+using Core.Models;
 using Core.Models.Consts;
 using Core.Models.Enums;
 using Core.Models.Exceptions.ServerExceptions;
 using Core.Models.Exceptions.UserFaultExceptions;
-using Core.Models.Interfaces;
 using Core.Services.Factories;
 using System;
 using System.Collections.Concurrent;
@@ -25,14 +25,14 @@ namespace Core.Handlers.MessageHandlers
 
         public MessageType MessageType => MessageType.MessageSendRequest;
 
-        public async Task HandleAsync(IMessage message, ConcurrentDictionary<string, IClientInfo> activeClients, CancellationToken cancellationToken)
+        public async Task HandleAsync(Message message, ConcurrentDictionary<string, ClientInfo> activeClients, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
             if (!message.Headers.TryGetValue(MessageHeaders.Recipient, out string recipientName))
                 throw new BadMessageFormatException(MessageType.MissingHeader, $"{MessageHeaders.Recipient} header was missing.");
 
-            IClientInfo recipient = activeClients.TryGetValue(recipientName, out IClientInfo result)
+            ClientInfo recipient = activeClients.TryGetValue(recipientName, out ClientInfo result)
                 ? result
                 : throw new ClientUnreachableException(message.Headers[MessageHeaders.Recipient], MessageType.ClientUnreachable, $"{recipientName} was unreachable.");
 
@@ -40,7 +40,7 @@ namespace Core.Handlers.MessageHandlers
             await this.SendConfirmation(message, cancellationToken);
         }
 
-        private async Task SendMessageAsync(IMessage requestMessage, Socket recipient, CancellationToken cancellationToken)
+        private async Task SendMessageAsync(Message requestMessage, Socket recipient, CancellationToken cancellationToken)
         {
             IDictionary<string, string> headers = new Dictionary<string, string>
             {
@@ -57,7 +57,7 @@ namespace Core.Handlers.MessageHandlers
             await recipient.SendAsync(new ArraySegment<byte>(messageData), SocketFlags.None, cancellationToken);
         }
 
-        private async Task SendConfirmation(IMessage requestMessage, CancellationToken cancellationToken)
+        private async Task SendConfirmation(Message requestMessage, CancellationToken cancellationToken)
         {
             byte[] messageData = _messageFactory.CreateBytes(MessageType.MessageSent, requestMessage.Headers);
             await requestMessage.ClientInfo.Socket.SendAsync(new ArraySegment<byte>(messageData), SocketFlags.None, cancellationToken);

@@ -2,7 +2,6 @@
 using Core.Models;
 using Core.Models.Enums;
 using Core.Models.Exceptions.UserFaultExceptions;
-using Core.Models.Interfaces;
 using Core.Pipeline;
 using Core.Services.Encoders;
 using Host.Listeners.Interfaces;
@@ -31,7 +30,7 @@ namespace Host.Listeners
 
         private readonly IPEndPoint _ipEndPoint;
 
-        private readonly ConcurrentDictionary<string, IClientInfo> _connectedClients;
+        private readonly ConcurrentDictionary<string, ClientInfo> _connectedClients;
 
         private readonly FrameMetaDataConfiguration _frameMetaDataConfiguration;
 
@@ -45,7 +44,7 @@ namespace Host.Listeners
             ProtocolType = ProtocolType.Tcp;
             IsListening = false;
 
-            _connectedClients = new ConcurrentDictionary<string, IClientInfo>();
+            _connectedClients = new ConcurrentDictionary<string, ClientInfo>();
 
             _logger = logger;
             _listenerSettings = settings;
@@ -86,7 +85,7 @@ namespace Host.Listeners
 
                 foreach (var pair in _connectedClients)
                 {
-                    _connectedClients.TryRemove(pair.Key, out IClientInfo clientInfo);
+                    _connectedClients.TryRemove(pair.Key, out ClientInfo clientInfo);
                     clientInfo?.Socket.Disconnect(false);
                     clientInfo?.Socket.Dispose();
                 }
@@ -113,14 +112,14 @@ namespace Host.Listeners
                 try
                 {
                     byte[] frameMetaData = await ReceiveDataAsync(connectedClientSocket, _frameMetaDataConfiguration.MetaDataFieldsTotalSize);
-                    IFrameMetaData metaData = scope.ServiceProvider.GetRequiredService<IFrameMetaEncoder>().Decode(frameMetaData);
+                    FrameMetaData metaData = scope.ServiceProvider.GetRequiredService<IFrameMetaEncoder>().Decode(frameMetaData);
 
                     if (!(metaData.Type == MessageType.RegistrationRequest || metaData.Type == MessageType.AuthenticationRequest))
                         throw new InvalidMessageException(metaData.Type, "Only registration and authentication requests allowed.");
 
 
                     byte[] data = await this.ReceiveDataAsync(connectedClientSocket, metaData.HeadersDataLength + metaData.MessageDataLength).ConfigureAwait(false);
-                    IMessage message = scope.ServiceProvider.GetRequiredService<IMessageEncoder>().Decode(data, metaData, ClientInfo.Create(0, string.Empty, connectedClientSocket));
+                    Message message = scope.ServiceProvider.GetRequiredService<IMessageEncoder>().Decode(data, metaData, ClientInfo.Create(0, string.Empty, connectedClientSocket));
 
                     IAuthenticationHandler authenticationHandler = scope.ServiceProvider.GetRequiredService<IAuthenticationHandler>();
 
@@ -128,7 +127,7 @@ namespace Host.Listeners
                         await authenticationHandler.RegisterAsync(message, _cancellationToken).ConfigureAwait(false);
                     else
                     {
-                        IClientInfo client = await authenticationHandler.Authenticate(message, _cancellationToken).ConfigureAwait(false);
+                        ClientInfo client = await authenticationHandler.Authenticate(message, _cancellationToken).ConfigureAwait(false);
                         this.RegisterConnectedUser(client);
                         Task.Factory.StartNew(() => ListenForMessagesAsync(client), TaskCreationOptions.AttachedToParent).Unwrap();
                     }
@@ -146,7 +145,7 @@ namespace Host.Listeners
             }
         }
 
-        private void RegisterConnectedUser(IClientInfo clientInfo)
+        private void RegisterConnectedUser(ClientInfo clientInfo)
         {
             bool result = _connectedClients.TryAdd(clientInfo.Name, clientInfo);
 
@@ -157,7 +156,7 @@ namespace Host.Listeners
             }
         }
 
-        private async Task ListenForMessagesAsync(IClientInfo clientInfo)
+        private async Task ListenForMessagesAsync(ClientInfo clientInfo)
         {
             using (var scope = _serviceProvider.CreateScope())
             {
@@ -166,10 +165,10 @@ namespace Host.Listeners
                     try
                     {
                         byte[] frameMetaData = await this.ReceiveDataAsync(clientInfo.Socket, _frameMetaDataConfiguration.MetaDataFieldsTotalSize).ConfigureAwait(false);
-                        IFrameMetaData frameMeta = scope.ServiceProvider.GetRequiredService<IFrameMetaEncoder>().Decode(frameMetaData);
+                        FrameMetaData frameMeta = scope.ServiceProvider.GetRequiredService<IFrameMetaEncoder>().Decode(frameMetaData);
 
                         byte[] data = await this.ReceiveDataAsync(clientInfo.Socket, frameMeta.HeadersDataLength + frameMeta.MessageDataLength).ConfigureAwait(false);
-                        IMessage message = scope.ServiceProvider.GetRequiredService<IMessageEncoder>().Decode(data, frameMeta, clientInfo);
+                        Message message = scope.ServiceProvider.GetRequiredService<IMessageEncoder>().Decode(data, frameMeta, clientInfo);
 
                         await scope.ServiceProvider.GetRequiredService<IMessageDispatcher>().DispatchAsync(message, _connectedClients, _cancellationToken).ConfigureAwait(false);
                     }
@@ -186,7 +185,7 @@ namespace Host.Listeners
                 clientInfo.Socket.Disconnect(false);
 
             clientInfo.Socket.Close();
-            _connectedClients.TryRemove(clientInfo.Name, out IClientInfo result);
+            _connectedClients.TryRemove(clientInfo.Name, out ClientInfo result);
             _logger.LogInformation($"User: {result.Name} DISCONNECTED.");
             _cancellationToken.ThrowIfCancellationRequested();
         }

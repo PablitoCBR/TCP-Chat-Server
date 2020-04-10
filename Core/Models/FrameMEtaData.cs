@@ -1,9 +1,8 @@
 ﻿using Core.Models.Enums;
-using Core.Models.Interfaces;
 
 namespace Core.Models
 {
-    public class FrameMetaData : IFrameMetaData
+    public class FrameMetaData
     {
         public MessageType Type { get; }
 

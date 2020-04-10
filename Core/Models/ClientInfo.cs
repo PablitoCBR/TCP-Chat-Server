@@ -1,10 +1,9 @@
 ﻿using System.Net;
 using System.Net.Sockets;
-using Core.Models.Interfaces;
 
 namespace Core.Models
 {
-    public class ClientInfo : IClientInfo
+    public class ClientInfo
     {
         public int Id { get; }
 
@@ -22,7 +21,7 @@ namespace Core.Models
             RemoteEndPoint = socket.RemoteEndPoint as IPEndPoint;
         }
 
-        public static IClientInfo Create(int id, string name, Socket socket)
+        public static ClientInfo Create(int id, string name, Socket socket)
             => new ClientInfo(id, name, socket);
     }
 }

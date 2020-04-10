@@ -1,6 +1,5 @@
 ﻿using Core.Models;
 using Core.Models.Enums;
-using Core.Models.Interfaces;
 using Core.Services.Encoders;
 using Microsoft.Extensions.Options;
 using System;
@@ -16,7 +15,7 @@ namespace ChattyUnitTests.Core.Encoders
         private readonly FrameMetaDataConfiguration _configuration;
 
         private readonly byte[] _testMessageEncoded;
-        private readonly IFrameMetaData _testMessageDecoded;
+        private readonly FrameMetaData _testMessageDecoded;
 
         public FrameMetaEncoderTests()
         {
@@ -57,7 +56,7 @@ namespace ChattyUnitTests.Core.Encoders
         public void DecodeFrameMetaDataTest()
         {
             //Act
-            IFrameMetaData result = _frameMetaEncoder.Decode(_testMessageEncoded);
+            FrameMetaData result = _frameMetaEncoder.Decode(_testMessageEncoded);
 
             //Assert
             Assert.NotNull(result);

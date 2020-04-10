@@ -1,5 +1,4 @@
 ﻿using Core.Models;
-using Core.Models.Interfaces;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -17,14 +16,14 @@ namespace Core.Services.Encoders
             this.FrameMetaEncoder = frameMetaEncoder;
         }
 
-        public IMessage Decode(byte[] message, IFrameMetaData frameMetaData, IClientInfo clientInfo)
+        public Message Decode(byte[] message, FrameMetaData frameMetaData, ClientInfo clientInfo)
         {
             byte[] headersData = message.Take(frameMetaData.HeadersDataLength).ToArray();
             IDictionary<string, string> headers = this.HeadersEncoder.Decode(headersData);
             return new Message(clientInfo, frameMetaData, headers, message.Skip(frameMetaData.HeadersDataLength).ToArray());
         }
 
-        public byte[] Encode(IMessage message)
+        public byte[] Encode(Message message)
         {
             byte[] frameMetaData = this.FrameMetaEncoder.Encode(message.FrameMetaData);
             byte[] headersData = this.HeadersEncoder.Encode(message.Headers);
@@ -38,8 +37,8 @@ namespace Core.Services.Encoders
 
     public interface IMessageEncoder
     {
-        byte[] Encode(IMessage message);
+        byte[] Encode(Message message);
 
-        IMessage Decode(byte[] message, IFrameMetaData frameMetaData, IClientInfo clientInfo);
+        Message Decode(byte[] message, FrameMetaData frameMetaData, ClientInfo clientInfo);
     }
 }

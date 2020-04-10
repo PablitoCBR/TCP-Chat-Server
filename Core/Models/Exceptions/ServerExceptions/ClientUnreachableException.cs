@@ -1,5 +1,4 @@
 ﻿using Core.Models.Enums;
-using Core.Models.Interfaces;
 
 namespace Core.Models.Exceptions.ServerExceptions
 {
@@ -7,7 +6,7 @@ namespace Core.Models.Exceptions.ServerExceptions
     {
         public string ClientName { get; }
 
-        public ClientUnreachableException(IClientInfo clientInfo, MessageType responseMessageType, string message = "") 
+        public ClientUnreachableException(ClientInfo clientInfo, MessageType responseMessageType, string message = "") 
             : this(clientInfo.Name, responseMessageType, message)
         {
 

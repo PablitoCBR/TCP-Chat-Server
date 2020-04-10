@@ -1,9 +1,9 @@
 ﻿using Core.Handlers.MessageHandlers.Interfaces;
+using Core.Models;
 using Core.Models.Consts;
 using Core.Models.Enums;
 using Core.Models.Exceptions.ServerExceptions;
 using Core.Models.Exceptions.UserFaultExceptions;
-using Core.Models.Interfaces;
 using Core.Services.Factories;
 using System;
 using System.Collections.Concurrent;
@@ -25,7 +25,7 @@ namespace Core.Handlers.MessageHandlers
 
         public MessageType MessageType => MessageType.DHKeyExchangeStepRequest;
 
-        public async Task HandleAsync(IMessage message, ConcurrentDictionary<string, IClientInfo> activeClients, CancellationToken cancellationToken)
+        public async Task HandleAsync(Message message, ConcurrentDictionary<string, ClientInfo> activeClients, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -38,7 +38,7 @@ namespace Core.Handlers.MessageHandlers
             if(!message.Headers.TryGetValue(MessageHeaders.MessageGuid, out string messageGuid))
                 throw new BadMessageFormatException(MessageType.MissingHeader, $"{MessageHeaders.MessageGuid} header was missing.");
 
-            IClientInfo recipient = activeClients.TryGetValue(recipientName, out IClientInfo result)
+            ClientInfo recipient = activeClients.TryGetValue(recipientName, out ClientInfo result)
                 ? result
                 : throw new ClientUnreachableException(message.Headers[MessageHeaders.Recipient], MessageType.ClientUnreachable, $"{recipientName} was unreachable.");
 

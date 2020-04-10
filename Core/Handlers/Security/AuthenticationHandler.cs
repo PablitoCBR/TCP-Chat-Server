@@ -5,7 +5,6 @@
     using Core.Models.Consts;
     using Core.Models.Enums;
     using Core.Models.Exceptions.UserFaultExceptions;
-    using Core.Models.Interfaces;
     using Core.Services.Factories;
     using Core.Services.Security;
     using DAL.Models;
@@ -36,7 +35,7 @@
             _messageFactory = messageFactory;
         }
 
-        public async Task<IClientInfo> Authenticate(IMessage message, CancellationToken cancellationToken) 
+        public async Task<ClientInfo> Authenticate(Message message, CancellationToken cancellationToken) 
         {
             var (username, password) = this.GetCredentials(message.Headers);
             User user = await _userRepository.GetByNameAsync(username);
@@ -54,7 +53,7 @@
 
             byte[] responseMessage = _messageFactory.CreateBytes(MessageType.Authenticated);
             await message.ClientInfo.Socket.SendAsync(new ArraySegment<byte>(responseMessage), SocketFlags.None, cancellationToken); 
-            IClientInfo clientInfo = ClientInfo.Create(user.Id, user.Username, message.ClientInfo.Socket);
+            ClientInfo clientInfo = ClientInfo.Create(user.Id, user.Username, message.ClientInfo.Socket);
 
             user.LastConnected = DateTime.Now;
             if (!String.Equals(clientInfo.RemoteEndPoint.Address.ToString(), user.LastKnownIPAddress))
@@ -63,7 +62,7 @@
             return clientInfo;
         }
 
-        public async Task RegisterAsync(IMessage message, CancellationToken cancellationToken) 
+        public async Task RegisterAsync(Message message, CancellationToken cancellationToken) 
         {
             var (username, password) = this.GetCredentials(message.Headers);
 

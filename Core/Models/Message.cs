@@ -1,19 +1,18 @@
-﻿using Core.Models.Interfaces;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Core.Models
 {
-    public class Message : IMessage
+    public class Message 
     {
-        public IClientInfo ClientInfo { get; }
+        public ClientInfo ClientInfo { get; }
 
-        public IFrameMetaData FrameMetaData { get; }
+        public FrameMetaData FrameMetaData { get; }
 
         public IDictionary<string, string> Headers { get; }
 
         public byte[] MessageData { get; }
 
-        public Message(IClientInfo clientInfo, IFrameMetaData frameMetaData, IDictionary<string, string> headers,  byte[] messageData)
+        public Message(ClientInfo clientInfo, FrameMetaData frameMetaData, IDictionary<string, string> headers,  byte[] messageData)
         {
             ClientInfo = clientInfo;
             MessageData = messageData;
