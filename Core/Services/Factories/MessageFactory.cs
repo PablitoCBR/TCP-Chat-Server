@@ -1,10 +1,9 @@
-﻿using System.Collections.Generic;
-using System.Text;
-using Core.Models;
+﻿using Core.Models;
 using Core.Models.Enums;
 using Core.Models.Interfaces;
-using Core.Services.Encoders.Interfaces;
-using Core.Services.Factories.Interfaces;
+using Core.Services.Encoders;
+using System.Collections.Generic;
+using System.Text;
 
 namespace Core.Services.Factories
 {
@@ -53,5 +52,22 @@ namespace Core.Services.Factories
 
         public byte[] CreateBytes(MessageType messageType, string message)
             => this.CreateBytes(messageType, new Dictionary<string, string>(), message);
+    }
+
+    public interface IMessageFactory
+    {
+        IMessage Create(IClientInfo clientInfo, MessageType messageType, IDictionary<string, string> headers, string message = "");
+
+        IMessage Create(IClientInfo clientInfo, MessageType messageType, IDictionary<string, string> headers, byte[] messageData);
+
+        byte[] CreateBytes(MessageType messageType);
+
+        byte[] CreateBytes(MessageType messageType, string message);
+
+        byte[] CreateBytes(MessageType messageType, IDictionary<string, string> headers, string message = "");
+
+        byte[] CreateBytes(MessageType messageType, IDictionary<string, string> headers, byte[] messageData);
+
+        byte[] CreateBytes(IMessage message);
     }
 }

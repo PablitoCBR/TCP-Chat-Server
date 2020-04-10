@@ -1,26 +1,20 @@
-﻿using System;
+﻿using Core.Handlers.Security.Interfaces;
+using Core.Models;
+using Core.Models.Enums;
+using Core.Models.Exceptions.UserFaultExceptions;
+using Core.Models.Interfaces;
+using Core.Pipeline;
+using Core.Services.Encoders;
+using Host.Listeners.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using System;
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
-
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
-
-using Host.Listeners.Interfaces;
-
-using Core.Pipeline.Interfaces;
-
-using Core.Models;
-using Core.Models.Enums;
-using Core.Models.Exceptions.UserFaultExceptions;
-using Core.Models.Interfaces;
-
-using Core.Services.Encoders.Interfaces;
-
-using Core.Handlers.Security.Interfaces;
 
 namespace Host.Listeners
 {

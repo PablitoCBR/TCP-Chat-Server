@@ -1,27 +1,22 @@
 ﻿namespace Core.Handlers.Security
 {
+    using Core.Handlers.Security.Interfaces;
+    using Core.Models;
+    using Core.Models.Consts;
+    using Core.Models.Enums;
+    using Core.Models.Exceptions.UserFaultExceptions;
+    using Core.Models.Interfaces;
+    using Core.Services.Factories;
+    using Core.Services.Security;
+    using DAL.Models;
+    using DAL.Repositories.Interfaces;
+    using Microsoft.Extensions.Logging;
     using System;
     using System.Collections.Generic;
     using System.Net.Sockets;
     using System.Text;
-    using System.Threading.Tasks;
-
-    using Core.Models;
-    using Core.Models.Consts;
-    using Core.Models.Exceptions.UserFaultExceptions;
-    using Core.Models.Enums;
-    using Core.Models.Interfaces;
-
-    using Core.Services.Security.Interfaces;
-    using Core.Services.Factories.Interfaces;
-
-    using Core.Handlers.Security.Interfaces;
-
-    using DAL.Models;
-    using DAL.Repositories.Interfaces;
-
-    using Microsoft.Extensions.Logging;
     using System.Threading;
+    using System.Threading.Tasks;
 
     public class AuthenticationHandler : IAuthenticationHandler
     {

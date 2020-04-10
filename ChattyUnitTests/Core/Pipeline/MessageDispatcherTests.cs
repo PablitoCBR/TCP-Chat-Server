@@ -3,7 +3,6 @@ using Core.Handlers.MessageHandlers.Interfaces;
 using Core.Models.Enums;
 using Core.Models.Interfaces;
 using Core.Pipeline;
-using Core.Pipeline.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;

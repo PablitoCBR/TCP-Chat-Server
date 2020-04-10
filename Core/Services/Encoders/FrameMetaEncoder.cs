@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-
-using Core.Models;
+﻿using Core.Models;
 using Core.Models.Enums;
 using Core.Models.Exceptions.ServerExceptions;
 using Core.Models.Interfaces;
-
-using Core.Services.Encoders.Interfaces;
-
 using Microsoft.Extensions.Options;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Core.Services.Encoders
 {
@@ -57,5 +53,18 @@ namespace Core.Services.Encoders
                 throw new UnsupportedMessageTypeException(frameMetaData[0], MessageType.UnrecognizedMessageType, "Message frame mata data was containing unrecognized message type code.");
             return (MessageType)frameMetaData[0];
         }
+    }
+
+    public interface IFrameMetaEncoder
+    {
+        IFrameMetaData Decode(byte[] frameMetaData);
+
+        byte[] Encode(IFrameMetaData frameMetaData);
+
+        MessageType GetMessageType(byte[] frameMetaData);
+
+        int GetHeadersDataLength(byte[] frameMetaData);
+
+        int GetMessageDataLength(byte[] frameMetaData);
     }
 }

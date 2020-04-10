@@ -1,40 +1,26 @@
-﻿using System;
-using System.Net.Sockets;
-
-using Microsoft.Extensions.DependencyInjection;
-
-using Serilog;
-
-using Host.Builder;
-using Host.Builder.Models;
-using Host.Listeners;
-using Host.Listeners.Interfaces;
-
-using Core.Models;
-using Core.Services.Encoders.Interfaces;
-using Core.Services.Encoders;
-using Core.Services.Security;
-using Core.Services.Security.Interfaces;
-
-using Core.Pipeline.Interfaces;
-using Core.Pipeline;
-
-using Core.Services.Factories.Interfaces;
-using Core.Services.Factories;
-
-using Core.Handlers.Security.Interfaces;
-using Core.Handlers.Security;
+﻿using Core.Handlers.ExceptionHandlers;
 using Core.Handlers.ExceptionHandlers.Interfaces;
-using Core.Handlers.ExceptionHandlers;
-using Core.Handlers.MessageHandlers.Interfaces;
 using Core.Handlers.MessageHandlers;
-
+using Core.Handlers.MessageHandlers.Interfaces;
+using Core.Handlers.Security;
+using Core.Handlers.Security.Interfaces;
+using Core.Models;
 using Core.Models.Exceptions;
 using Core.Models.Exceptions.ServerExceptions;
-
+using Core.Pipeline;
+using Core.Services.Encoders;
+using Core.Services.Factories;
+using Core.Services.Security;
 using DAL;
 using DAL.Repositories;
 using DAL.Repositories.Interfaces;
+using Host.Builder;
+using Host.Listeners;
+using Host.Listeners.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
+using Serilog;
+using System;
+using System.Net.Sockets;
 
 namespace Server
 {
@@ -71,7 +57,6 @@ namespace Server
         private void ConfigureOptions(IServiceCollection services)
         {
             services.AddOptions<SecuritySettings>().Bind(Configuration.GetSection(nameof(SecuritySettings))).ValidateDataAnnotations();
-            services.AddOptions<HostBuilderSettings>().Bind(Configuration.GetSection(nameof(HostBuilderSettings))).ValidateDataAnnotations();
             services.AddOptions<ListenerSettings>().Bind(Configuration.GetSection(nameof(ListenerSettings))).ValidateDataAnnotations();
             services.AddOptions<FrameMetaDataConfiguration>().Bind(Configuration.GetSection(nameof(FrameMetaDataConfiguration)))
                 .ValidateDataAnnotations()

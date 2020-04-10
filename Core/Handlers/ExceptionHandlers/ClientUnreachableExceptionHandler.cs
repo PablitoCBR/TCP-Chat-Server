@@ -1,13 +1,10 @@
-﻿using System;
+﻿using Core.Handlers.ExceptionHandlers.Interfaces;
+using Core.Models.Exceptions.ServerExceptions;
+using Core.Services.Factories;
+using System;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
-
-using Core.Handlers.ExceptionHandlers.Interfaces;
-
-using Core.Models.Exceptions.ServerExceptions;
-
-using Core.Services.Factories.Interfaces;
 
 namespace Core.Handlers.ExceptionHandlers
 {

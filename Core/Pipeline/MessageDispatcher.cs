@@ -1,4 +1,12 @@
-﻿using System;
+﻿using Core.Handlers.ExceptionHandlers.Interfaces;
+using Core.Handlers.MessageHandlers.Interfaces;
+using Core.Models.Enums;
+using Core.Models.Exceptions;
+using Core.Models.Interfaces;
+using Core.Services.Factories;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,22 +14,8 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Core.Handlers.ExceptionHandlers.Interfaces;
-using Core.Handlers.MessageHandlers.Interfaces;
-
-using Core.Models.Enums;
-using Core.Models.Exceptions;
-using Core.Models.Interfaces;
-
-using Core.Pipeline.Interfaces;
-
-using Core.Services.Factories.Interfaces;
-
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-
 namespace Core.Pipeline
-{   
+{
     public class MessageDispatcher : IMessageDispatcher
     {
         private readonly IServiceProvider _serviceProvider;
@@ -67,5 +61,14 @@ namespace Core.Pipeline
                 }
             }
         }
+    }
+
+    public interface IMessageDispatcher
+    {
+        Task DispatchAsync(IMessage message, ConcurrentDictionary<string, IClientInfo> connectedClients, CancellationToken cancellationToken = default);
+
+        Task OnExceptionAsync(IClientInfo clientInfo, Exception exception, CancellationToken cancellationToken = default);
+
+        Task OnExceptionAsync(Socket clientSocket, Exception exception, CancellationToken cancellationToken = default);
     }
 }

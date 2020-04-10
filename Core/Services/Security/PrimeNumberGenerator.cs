@@ -4,8 +4,6 @@
     using System.Collections.Generic;
     using System.Linq;
 
-    using Core.Services.Security.Interfaces;
-
     public class PrimeNumberGenerator : IPrimeNumberGenerator
     {
         private readonly int[] _primeNumbers;
@@ -52,5 +50,10 @@
             }
             else return false;
         }
+    }
+
+    public interface IPrimeNumberGenerator
+    {
+        int GetRandomPrimeNumber();
     }
 }

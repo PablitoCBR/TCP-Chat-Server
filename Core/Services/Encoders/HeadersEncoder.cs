@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Core.Services.Encoders.Interfaces;
 
 namespace Core.Services.Encoders
 {
@@ -40,5 +39,12 @@ namespace Core.Services.Encoders
             string headersString = stringBuilder.ToString();
             return Encoding.ASCII.GetBytes(headersString);
         }
+    }
+
+    public interface IHeadersEncoder
+    {
+        IDictionary<string, string> Decode(byte[] headersData);
+
+        byte[] Encode(IDictionary<string, string> headers);
     }
 }

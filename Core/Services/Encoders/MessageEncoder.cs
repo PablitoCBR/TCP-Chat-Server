@@ -1,6 +1,5 @@
 ﻿using Core.Models;
 using Core.Models.Interfaces;
-using Core.Services.Encoders.Interfaces;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -35,5 +34,12 @@ namespace Core.Services.Encoders
             messageData.AddRange(message.MessageData);
             return messageData.ToArray();
         }
+    }
+
+    public interface IMessageEncoder
+    {
+        byte[] Encode(IMessage message);
+
+        IMessage Decode(byte[] message, IFrameMetaData frameMetaData, IClientInfo clientInfo);
     }
 }

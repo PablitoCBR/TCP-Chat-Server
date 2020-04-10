@@ -1,7 +1,5 @@
 using Core.Models.Consts;
 using Core.Models.Enums;
-using Core.Services.Encoders;
-using Core.Services.Encoders.Interfaces;
 using Host;
 using Host.Builder;
 using Server;
@@ -14,19 +12,18 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Utils;
 
 namespace ChattyAcceptaceTests
 {
     public abstract class TestTemplate
     {
         protected IHost Host { get; }
-        protected int HostPort { get; }
+        protected int HostPort { get; } = 8000;
 
         protected TestTemplate()
         {
             IHostBuilder builder = Server.Server.CreateDeafaultBuilder<Startup>(Array.Empty<string>());
-            HostPort = builder.BuilderSettings.Port;
+            builder.SetPort(HostPort);
             Host = builder.Build();
         }
 

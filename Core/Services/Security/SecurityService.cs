@@ -1,5 +1,4 @@
-﻿using Core.Services.Security.Interfaces;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using System.Security.Cryptography;
 
 namespace Core.Services.Security
@@ -51,5 +50,12 @@ namespace Core.Services.Security
                 return hashGenerator.GetBytes(this.Settings.HashByteSize);
             }
         }
+    }
+
+    public interface ISecurityService
+    {
+        (byte[] passwordHash, byte[] passwordSalt) GenerateHash(string password);
+
+        bool VerifyPassword(string password, byte[] passwordHash, byte[] passwordSalt);
     }
 }

@@ -1,7 +1,5 @@
-﻿
-using Core.Models.Consts;
+﻿using Core.Models.Consts;
 using Core.Services.Encoders;
-using Core.Services.Encoders.Interfaces;
 using System.Collections.Generic;
 using System.Text;
 using Utils;
