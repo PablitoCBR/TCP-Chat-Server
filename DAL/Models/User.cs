@@ -2,10 +2,8 @@
 
 namespace DAL.Models
 {
-    public class User
+    public class User : Entity
     {
-        public int Id { get; set; }
-
         public string Username { get; set; }
 
         public byte[] PasswordHash { get; set; }

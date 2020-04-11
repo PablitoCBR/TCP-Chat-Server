@@ -1,13 +1,14 @@
-﻿using System.Threading.Tasks;
+﻿using DAL.Models;
+using System.Threading.Tasks;
 
 namespace DAL.Repositories.Interfaces
 {
-    public interface IRepository<T>
+    public interface IRepository<TEntity> where TEntity : Entity
     {
-        Task<T> GetAsync(int id);
+        Task<TEntity> GetAsync(int id);
 
-        Task AddAsync(T data);
+        Task AddAsync(TEntity data);
 
-        Task UpdateAsync(T data);
+        Task UpdateAsync(TEntity data);
     }
 }
