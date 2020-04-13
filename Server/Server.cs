@@ -6,7 +6,7 @@ namespace Server
 {
     public static class Server
     {
-        public static IHostBuilder CreateDeafaultBuilder<TStartup>(string[] args) where TStartup : AbstractStartup
+        public static IHostBuilder CreateDeafaultBuilder<TStartup>(string[] args) where TStartup : AbstractStartup, new()
         {
             TStartup startup = Activator.CreateInstance<TStartup>();
             IServiceProvider serviceProvider = startup.ConfigureServices(new ServiceCollection());
