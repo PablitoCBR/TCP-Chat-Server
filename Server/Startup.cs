@@ -3,7 +3,6 @@ using Core.Handlers.ExceptionHandlers.Interfaces;
 using Core.Handlers.MessageHandlers;
 using Core.Handlers.MessageHandlers.Interfaces;
 using Core.Handlers.Security;
-using Core.Handlers.Security.Interfaces;
 using Core.Models;
 using Core.Models.Exceptions;
 using Core.Models.Exceptions.ServerExceptions;
@@ -68,6 +67,7 @@ namespace Server
             services.AddTransient<IMessageDispatcher, MessageDispatcher>();
         
             services.AddTransient<IAuthenticationHandler, AuthenticationHandler>();
+            services.AddTransient<IRegistrationHandler, RegistrationHandler>();
 
             services.AddTransient<IMessageHandler, SendRequestMessageHandler>();
             services.AddTransient<IMessageHandler, DHKeyExchangeRequestMessageHandler>();

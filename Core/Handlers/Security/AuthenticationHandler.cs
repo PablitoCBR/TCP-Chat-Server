@@ -1,8 +1,6 @@
 ﻿namespace Core.Handlers.Security
 {
-    using Core.Handlers.Security.Interfaces;
     using Core.Models;
-    using Core.Models.Consts;
     using Core.Models.Enums;
     using Core.Models.Exceptions.UserFaultExceptions;
     using Core.Services.Factories;
@@ -11,13 +9,11 @@
     using DAL.Repositories.Interfaces;
     using Microsoft.Extensions.Logging;
     using System;
-    using System.Collections.Generic;
     using System.Net.Sockets;
-    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
 
-    public class AuthenticationHandler : IAuthenticationHandler
+    public class AuthenticationHandler : AbstractSecurityHandler, IAuthenticationHandler
     {
         private readonly ISecurityService _securityService;
 
@@ -35,7 +31,7 @@
             _messageFactory = messageFactory;
         }
 
-        public async Task<ClientInfo> Authenticate(Message message, CancellationToken cancellationToken) 
+        public async Task<ClientInfo> Authenticate(Message message, CancellationToken cancellationToken)
         {
             var (username, password) = this.GetCredentials(message.Headers);
             User user = await _userRepository.GetByNameAsync(username);
@@ -52,7 +48,7 @@
             _logger.LogInformation("User {0} was authenticated successfully.", username);
 
             byte[] responseMessage = _messageFactory.CreateBytes(MessageType.Authenticated);
-            await message.ClientInfo.Socket.SendAsync(new ArraySegment<byte>(responseMessage), SocketFlags.None, cancellationToken); 
+            await message.ClientInfo.Socket.SendAsync(new ArraySegment<byte>(responseMessage), SocketFlags.None, cancellationToken);
             ClientInfo clientInfo = ClientInfo.Create(user.Id, user.Username, message.ClientInfo.Socket);
 
             user.LastConnected = DateTime.Now;
@@ -61,33 +57,10 @@
 
             return clientInfo;
         }
+    }
 
-        public async Task RegisterAsync(Message message, CancellationToken cancellationToken) 
-        {
-            var (username, password) = this.GetCredentials(message.Headers);
-
-            if (await _userRepository.AnyWithNameAsync(username))
-                throw new AuthenticationException(MessageType.RegistrationFailed, "Username is already taken.");
-
-            var (passwordHash, salt) = _securityService.GenerateHash(password);
-
-            await _userRepository.AddAsync(new User(username, passwordHash, salt, DateTime.Now, message.ClientInfo.RemoteEndPoint.ToString()));
-
-            _logger.LogInformation("Registered new user. Username: {0}, Connected from IP: {1}.", username, message.ClientInfo.RemoteEndPoint);
-
-            byte[] confirmationMessage = _messageFactory.CreateBytes(MessageType.Registered);
-            await message.ClientInfo.Socket.SendAsync(new ArraySegment<byte>(confirmationMessage), SocketFlags.None, cancellationToken); 
-        }
-
-        private (string username, string password) GetCredentials(IDictionary<string, string> headers)
-        {
-            if (!headers.ContainsKey(MessageHeaders.Authentication))
-                throw new AuthenticationException(MessageType.Unauthenticated, "Authentication header was not found.");
-
-            string credentialsBase64 = headers[MessageHeaders.Authentication];
-            string credentailsString = Encoding.ASCII.GetString(Convert.FromBase64String(credentialsBase64));
-            string[] credentials = credentailsString.Split(':');
-            return (credentials[0], credentials[1]);
-        }
+    public interface IAuthenticationHandler
+    {
+        Task<ClientInfo> Authenticate(Message message, CancellationToken cancellationToken);
     }
 }

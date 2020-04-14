@@ -1,4 +1,4 @@
-﻿using Core.Handlers.Security.Interfaces;
+﻿using Core.Handlers.Security;
 using Core.Models;
 using Core.Models.Enums;
 using Core.Models.Exceptions.UserFaultExceptions;
@@ -121,13 +121,11 @@ namespace Host.Listeners
                     byte[] data = await this.ReceiveDataAsync(connectedClientSocket, metaData.HeadersDataLength + metaData.MessageDataLength).ConfigureAwait(false);
                     Message message = scope.ServiceProvider.GetRequiredService<IMessageEncoder>().Decode(data, metaData, ClientInfo.Create(0, string.Empty, connectedClientSocket));
 
-                    IAuthenticationHandler authenticationHandler = scope.ServiceProvider.GetRequiredService<IAuthenticationHandler>();
-
                     if (metaData.Type == MessageType.RegistrationRequest)
-                        await authenticationHandler.RegisterAsync(message, _cancellationToken).ConfigureAwait(false);
+                        await scope.ServiceProvider.GetRequiredService<IRegistrationHandler>().RegisterAsync(message, _cancellationToken).ConfigureAwait(false);
                     else
                     {
-                        ClientInfo client = await authenticationHandler.Authenticate(message, _cancellationToken).ConfigureAwait(false);
+                        ClientInfo client = await scope.ServiceProvider.GetRequiredService<IAuthenticationHandler>().Authenticate(message, _cancellationToken).ConfigureAwait(false);
                         this.RegisterConnectedUser(client);
                         Task.Factory.StartNew(() => ListenForMessagesAsync(client), TaskCreationOptions.AttachedToParent).Unwrap();
                     }
