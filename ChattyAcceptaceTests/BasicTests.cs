@@ -25,13 +25,16 @@ namespace ChattyAcceptaceTests
         }
 
         [Fact]
-        public async Task StartStopServerHostTest()
+        public async Task RestartServerHostTest()
         {
             await StartHostServerAsync();
             Assert.True(Host.IsActive);
 
             await StopHostServerAsync();
             Assert.False(Host.IsActive);
+
+            await StartHostServerAsync();
+            Assert.True(Host.IsActive);
         }
     }
 }

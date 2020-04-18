@@ -39,7 +39,8 @@ namespace ChattyFunctionalTests
         public void EncodeDiffrentMessageTypesTest(MessageType messageType)
         {
             // Arrange
-            Message message = new Message(null, new FrameMetaData(messageType, 0, 0), null, Array.Empty<byte>());
+            var frameMetaData = new FrameMetaData(messageType, 0, 0);
+            var message = new Message(null, frameMetaData, null, Array.Empty<byte>());
 
             // Act
             byte[] result = _messageEncoder.Encode(message);
