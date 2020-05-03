@@ -149,9 +149,11 @@ namespace ClientDemo
         private void ensureConnected()
         {
             if (_socket != null && _socket.Connected) return;
-
-            IPHostEntry ipHost = Dns.GetHostEntry(Dns.GetHostName());
-            IPAddress ipAddress = ipHost.AddressList[0];
+#if DEBUG
+            IPAddress ipAddress = Dns.GetHostAddresses(Dns.GetHostName())[0];
+#else
+            IPAddress ipAddress = Dns.GetHostAddresses(Dns.GetHostName())[3];
+#endif
             _socket = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
             IPEndPoint serverEndpoint = new IPEndPoint(ipAddress, HOST_PORT);
