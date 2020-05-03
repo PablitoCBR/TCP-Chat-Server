@@ -152,7 +152,9 @@ namespace ClientDemo
 #if DEBUG
             IPAddress ipAddress = Dns.GetHostAddresses(Dns.GetHostName())[0];
 #else
-            IPAddress ipAddress = Dns.GetHostAddresses(Dns.GetHostName())[3];
+            Console.Write("Enter server host IPv4 address: ");
+            string ipv4 = Console.ReadLine().Trim();
+            IPAddress ipAddress = IPAddress.Parse(ipv4);
 #endif
             _socket = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
