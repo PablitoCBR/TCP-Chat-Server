@@ -22,6 +22,7 @@ namespace ChattyLoadTests
         [InlineData(50)]
         [InlineData(100)]
         [InlineData(500)]
+        [InlineData(1000)]
         public async Task MultipleConnectionsAtOnce(int amount)
         {
             List<Task<Socket>> connectionTasks = Enumerable.Range(0, amount).Select(x => new Task<Socket>(CreateClientSocketConnectedToServer)).ToList();
@@ -39,15 +40,16 @@ namespace ChattyLoadTests
         [InlineData(500)]
         public async Task MultipleRegistrationAtOnce(int amount)
         {
-            List<Task<Socket>> connectionTasks = Enumerable.Range(0, amount).Select(x => new Task<Socket>(CreateClientSocketConnectedToServer)).ToList();
-            connectionTasks.ForEach(task => task.Start());
+            var connectionTasks = Enumerable.Range(0, amount).Select(x => Task.Run(() => CreateClientSocketConnectedToServer()));
             Socket[] result = await Task.WhenAll(connectionTasks.ToArray());
             Assert.True(result.All(socket => socket.Connected));
 
-            List<Task<bool>> registrationTasks = result.Select(socket => new Task<bool>(() => TryRegisterUser(socket, Guid.NewGuid().ToString(), "password"))).ToList();
-            registrationTasks.ForEach(task => task.Start());
+            var watch = new Stopwatch();
+            watch.Start();
+            var registrationTasks = result.Select(socket => Task.Run(() => TryRegisterUser(socket, Guid.NewGuid().ToString(), "password")));
             var results = await Task.WhenAll(registrationTasks.ToArray());
             CollectionAssert.AssertTrueForAll(results, x => x);
+            watch.Stop();
         }
 
         [Theory]
@@ -59,19 +61,29 @@ namespace ChattyLoadTests
         [InlineData(500)]
         public async Task MultipleRegistrationAndAuthenticationAtOnce(int amount)
         {
-            var tasks = Enumerable.Range(0, amount).Select(x => new Task(() =>
-            {
-                Socket socket = CreateClientSocketConnectedToServer();
-                Guid username = Guid.NewGuid();
-                bool registerResult = TryRegisterUser(socket, username.ToString(), "password");
-                Assert.True(registerResult);
-                socket = CreateClientSocketConnectedToServer();
-                bool authenticationResult = TryAuthenticateUser(socket, username.ToString(), "password");
-                Assert.True(authenticationResult);
-            })).ToList();
+            var connectedSockets = Enumerable.Range(0, amount).Select(x => CreateClientSocketConnectedToServer()).ToList();
 
-            tasks.ForEach(task => task.Start());
+            var watch = new Stopwatch();
+            watch.Start();
+            var tasks = connectedSockets.Select(socket => Task.Run(async () =>
+            {
+                Guid username = Guid.NewGuid();
+                await Task.Run(() =>
+                {
+                    bool registerResult = TryRegisterUser(socket, username.ToString(), "password");
+                    Assert.True(registerResult);
+                    socket.Dispose();
+                });
+                await Task.Run(() =>
+                {
+                    socket = CreateClientSocketConnectedToServer();
+                    bool authenticationResult = TryAuthenticateUser(socket, username.ToString(), "password");
+                    Assert.True(authenticationResult);
+                });
+            }));
+
             await Task.WhenAll(tasks.ToArray());
+            watch.Stop();
         }
 
         [Theory]
@@ -111,8 +123,12 @@ namespace ChattyLoadTests
                });
             }).ToList();
 
+            var watch = new Stopwatch();
+            watch.Start();
             sendingTasksNotStarted.ForEach(task => task.Start());
             await Task.WhenAll(sendingTasksNotStarted);
+
+            watch.Stop();
         }
 
         private bool TrySendMessage(Socket senderSocket, string senderName, string recipient)

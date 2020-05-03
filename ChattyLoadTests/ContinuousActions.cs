@@ -3,6 +3,7 @@ using Core.Models.Consts;
 using Core.Models.Enums;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Sockets;
 using System.Threading;
@@ -40,16 +41,19 @@ namespace ChattyLoadTests
         [InlineData(10)]
         [InlineData(20)]
         [InlineData(100)]
-        [InlineData(1000)]
+        [InlineData(500)]
         public void MultipleConsecutiveRegistrations(int amount)
         {
             var connectedSockets = Enumerable.Range(0, amount).Select(x => CreateClientSocketConnectedToServer());
 
+            var watch = new Stopwatch();
+            watch.Start();
             foreach(Socket socket in connectedSockets)
             {
                 bool registrationResult = TryRegisterUser(socket, Guid.NewGuid().ToString(), "password");
                 Assert.True(registrationResult);
             }
+            watch.Stop();
         }
 
         [Theory]
@@ -63,6 +67,8 @@ namespace ChattyLoadTests
         {
             var connectedSockets = Enumerable.Range(0, amount).Select(x => CreateClientSocketConnectedToServer()).ToArray();
 
+            var watch = new Stopwatch();
+            watch.Start();
             for(int index = 0; index < amount; index++)
             {
                 Guid userGuid = Guid.NewGuid();
@@ -71,7 +77,9 @@ namespace ChattyLoadTests
                 connectedSockets[index] = CreateClientSocketConnectedToServer();
                 Assert.True(registrationResult);
                 bool authenticationResult = TryAuthenticateUser(connectedSockets[index], userGuid.ToString(), "password");
+                Assert.True(authenticationResult);
             }
+            watch.Stop();
         }
 
         [Theory]
@@ -79,7 +87,7 @@ namespace ChattyLoadTests
         [InlineData(5)]
         [InlineData(10)]
         [InlineData(20)]
-        [InlineData(100)]
+        [InlineData(200)]
         public void MultipleConsecutiveMessageSending(int amount)
         {
             var connectedSockets = Enumerable.Range(0, amount).Select(x => CreateClientSocketConnectedToServer());
@@ -95,6 +103,8 @@ namespace ChattyLoadTests
                 users.Add(userGuid, authenticatedSocket);
             }
 
+            var watch = new Stopwatch();
+            watch.Start();
             foreach(var (guid, socket) in users)
             {
                 var recipient = users.FirstOrDefault(x => x.Key != guid);
@@ -103,6 +113,7 @@ namespace ChattyLoadTests
                 Assert.True(sendingResult);
                 Assert.True(reciveTask.Result);
             }
+            watch.Stop();
         }
 
         private bool TrySendMessage(Socket senderSocket, string senderName, string recipient)

@@ -10,25 +10,24 @@ namespace ChattyAcceptaceTests
         public void AuthenticateRegistaredUserTest()
         {
             Socket clientSocket = CreateClientSocketConnectedToServer();
-
             bool registerResult = TryRegisterUser(clientSocket, "admin", "admin");
             Assert.True(registerResult);
-
             clientSocket.Dispose();
+
             clientSocket = CreateClientSocketConnectedToServer();
             bool authenticationResult = TryAuthenticateUser(clientSocket, "admin", "admin");
             Assert.True(authenticationResult);
+            Assert.True(clientSocket.Connected);
         }
 
         [Fact]
         public void AuthenticateUserPassingWrongPasswordTest()
         {
             Socket clientSocket = CreateClientSocketConnectedToServer();
-
             bool registerResult = TryRegisterUser(clientSocket, "admin", "admin");
             Assert.True(registerResult);
-
             clientSocket.Dispose();
+
             clientSocket = CreateClientSocketConnectedToServer();
             bool authenticationResult = TryAuthenticateUser(clientSocket, "admin", "bad_password");
             Assert.False(authenticationResult);
