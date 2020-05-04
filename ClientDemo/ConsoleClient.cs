@@ -28,6 +28,8 @@ namespace ClientDemo
         private EventHandler<byte[]> _messageRecivedEvent;
         private Socket _socket;
 
+        private readonly IList<RecivedMessage> _history;
+
         private readonly IFrameMetaEncoder _frameMetaEncoder;
         private readonly IHeadersEncoder _headersEncoder;
 
@@ -39,6 +41,7 @@ namespace ClientDemo
                 Options.Create(
                     new FrameMetaDataConfiguration() { HeadersLengthFieldSize = 4, MessageLengthFieldSize = 4, MetaDataFieldsTotalSize = 9 }));
             _headersEncoder = new HeadersEncoder();
+            _history = new List<RecivedMessage>();
         }
 
         public void Register()
@@ -116,6 +119,14 @@ namespace ClientDemo
             _messageRecivedEvent += handleRecivedMessage;
         }
 
+        public void PrintMessageHistory()
+        {
+            foreach(var message in _history)
+            {
+                logMessageRecived(message.Sender, message.Message);
+            }
+        }
+
         private void listenForMessages()
         {
             while(true)
@@ -140,6 +151,7 @@ namespace ClientDemo
                 IDictionary<string, string> headers = _headersEncoder.Decode(_lastRecivedMessage.Skip(9).Take(frameMetaData.HeadersDataLength).ToArray());
                 string messageBody = Encoding.ASCII.GetString(message.Skip(9 + frameMetaData.HeadersDataLength).ToArray());
                 logMessageRecived(headers[MessageHeaders.Sender], messageBody);
+                _history.Add(new  RecivedMessage(headers[MessageHeaders.Sender], messageBody));
             }
 
             _messageRecived.Reset();
@@ -186,10 +198,10 @@ namespace ClientDemo
             Console.ForegroundColor = ConsoleColor.White;
         }
 
-        private void logMessageRecived(string recipient, string message)
+        private void logMessageRecived(string sender, string message)
         {
             Console.ForegroundColor = ConsoleColor.Blue;
-            Console.WriteLine("[MSG FROM: {0}] {1}", recipient, message);
+            Console.WriteLine("[MSG FROM: {0}] {1}", sender, message);
             Console.ForegroundColor = ConsoleColor.White;
         }
 
@@ -237,6 +249,18 @@ namespace ClientDemo
             data.AddRange(metaBuffer);
             data.AddRange(dataBuffer);
             return data.ToArray();
+        }
+
+        private class RecivedMessage
+        {
+            public string Sender { get;  }
+            public string Message { get;  }
+
+            public RecivedMessage(string sender, string message)
+            {
+                Sender = sender;
+                Message = message;
+            }
         }
     }
 }

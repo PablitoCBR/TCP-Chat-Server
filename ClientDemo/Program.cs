@@ -54,7 +54,8 @@ namespace ClientDemo
                 Console.WriteLine();
                 Console.WriteLine("======== MENU ========");
                 Console.WriteLine("1. Send message");
-                Console.WriteLine("2. Exit");
+                Console.WriteLine("2. Print recived message history");
+                Console.WriteLine("3. Exit");
                 Console.WriteLine("======================");
                 option = Console.ReadKey();
 
@@ -64,9 +65,14 @@ namespace ClientDemo
                     case ConsoleKey.NumPad1:
                         SendMessage();
                         break;
+                    case ConsoleKey.D2:
+                    case ConsoleKey.NumPad2:
+                        Console.Clear();
+                        _client.PrintMessageHistory();
+                        break;
                 }
             }
-            while ((option.Key == ConsoleKey.D2 || option.Key == ConsoleKey.NumPad2) == false);
+            while ((option.Key == ConsoleKey.D3 || option.Key == ConsoleKey.NumPad3) == false);
         }
 
         private static void SendMessage()

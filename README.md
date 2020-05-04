@@ -45,9 +45,11 @@
     5. After registration you will be requested to pass credentials again
     6. Request user authetication pressing **1** and enter IPv4 address from server host if required
 
-### Message sending
+### Client menu
 
 **Only after successful authentication**
+
+Message sending:
 
 1. Press **1** to enter message sending
 2. Enter recipient name (*if recipient will not be connected appropriate  error will occure*)
@@ -55,4 +57,6 @@
 4. Press *Enter* to send message
 5. `[MSG FROM: xyz]` info will occure on recipient console window
 
-Press **2** to exit
+Press **2** to print all recived messages in current session.
+
+Press **3** to exit
