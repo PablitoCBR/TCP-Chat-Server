@@ -8,13 +8,14 @@
 #### LOCAL MODE
 1. Clone repository
 2. Start server host
-    1. Run command line (Win/Linux)
-    2. Navigate to cloned repository location and `/Server ` folder
-    3. Run command `dotnet run -c DEBUG`
-    4. Type `run` to start listening
+    1. Run command line 
+    2. Navigate to cloned repository location and `/Server ` directory
+    3. If first compilation run command `dotnet restore` and `dotnet build -c DEBUG`
+    4. Run command `dotnet run -c DEBUG`
+    5. Type `run` to start listening
 3. Start demo client CLI
-    1. Run command line in new window (Win/Linux)
-    2. Navigate to cloned repository location and `/ClientDemo` folder
+    1. Run command line in new window 
+    2. Navigate to cloned repository location and `/ClientDemo` directory
     3. Run command `dotnet run -c DEBUG`
 4. Repeat step **3** for required number of clients
 5. In client CLI window type username and password that will be used by client
@@ -26,17 +27,19 @@
 1. Setup server host
     1. Clone repository to target host machine
     2. Start server host
-        1. Run command line (Win/Linux)
-        2. Navigate to cloned repository location and `/Server ` folder
-        3. Run command `dotnet run -c RELEASE`
-        4. Type `run` to start listening
-        5. IPv4 address and port of server will occure
+        1. Run command line 
+        2. Navigate to cloned repository location and `/Server ` directory
+        3. If first compilation run command `dotnet restore` and `dotnet build -c RELEASE`
+        4. Run command `dotnet run -c RELEASE`
+        5. Type `run` to start listening
+        6. IPv4 address and port of server will occure
 2. Setup client
     1. Clone repository to target host machine
     2. Start demo client CLI
-        1. Run command line in new window (Win/Linux)
-        2. Navigate to cloned repository location and `/ClientDemo` folder
-        3. Run command `dotnet run -c RELEASE`
+        1. Run command line in new window 
+        2. Navigate to cloned repository location and `/ClientDemo` directory
+        3. If first compilation run command `dotnet restore` and `dotnet build -c RELEASE`
+        4. Run command `dotnet run -c RELEASE`
     3. In client CLI window type username and password that will be used by client
     4. Request user registration pressing **2** and enter IPv4 address from server host if required (*if user is already registerd go to* **6**)
     5. After registration you will be requested to pass credentials again
